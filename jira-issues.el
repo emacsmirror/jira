@@ -7,6 +7,21 @@
 
 ;; This file is NOT part of GNU Emacs.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
 ;;; Commentary:
 
 ;; List and manage Jira issues
@@ -24,117 +39,6 @@
 (require 'jira-actions)
 (require 'jira-detail)
 
-(defvar jira-issues-fields
-  '((:key . ((:path . (key))
-             (:columns . 10)
-             (:name . "Key")
-             (:formatter . jira-fmt-issue-key)))
-    (:priority-name . ((:path . (fields priority name))
-                       (:columns . 10)
-                       (:name . "Priority")))
-    (:priority-icon.  ((:path . (fields priority iconUrl))
-                       (:columns . 10)
-                       (:name . "Priority")))
-    (:labels . ((:path . (fields labels))
-                (:columns . 10)
-                (:name . "Labels")))
-    (:original-estimate . ((:path . (fields aggregatetimeoriginalestimate))
-                           (:columns . 10)
-                           (:name . "Estimate")
-                           (:formatter . jira-fmt-time-from-secs)))
-    (:work-ratio . ((:path . (fields workratio))
-                    (:columns . 6)
-                    (:name . "WR")
-                    (:formatter . jira-fmt-issue-progress)))
-    (:remaining-time . ((:path . (fields timeestimate))
-                        (:columns . 10)
-                        (:name . "Remaining")
-                        (:formatter . jira-fmt-time-from-secs)))
-    (:assignee-name . ((:path . (fields assignee displayName))
-                       (:columns . 14)
-                       (:name . "Assignee")))
-    (:reporter-name . ((:path . (fields reporter displayName))
-                       (:columns . 14)
-                       (:name . "Reporter")))
-    (:components . ((:path . (fields components))
-                    (:columns . 10)
-                    (:name . "Components")
-                    (:formatter . jira-fmt-issue-components)))
-    (:fix-versions . ((:path . (fields fixVersions))
-                      (:columns . 10)
-                      (:name . "Fix Versions")
-                      (:formatter . jira-fmt-issue-fix-versions)))
-    (:status-name . ((:path . (fields status name))
-                     (:columns . 15)
-                     (:name . "Status")
-                     (:formatter . jira-fmt-issue-status)))
-    (:status-category-name . ((:path . (fields status statusCategory name))
-                              (:columns . 10)
-                              (:name . "Status Category")))
-    (:creator-name . ((:path (fields creator  displayName))
-                      (:columns . 10)
-                      (:name . "Creator")))
-    (:progress-percent . ((:path . (fields progress  percent))
-                          (:columns . 10)
-                          (:name . "Progress")
-                          (:formatter . jira-fmt-issue-progress)))
-    (:issue-type-name . ((:path . (fields issuetype name))
-                         (:columns . 15)
-                         (:name . "Type")
-                         (:formatter . jira-fmt-issue-type-name)))
-    (:issue-type-icon . ((:path . (fields issuetype iconUrl))
-                         (:columns .  10)
-                         (:name . "Type")))
-    (:project-key . ((:path . (fields project key))
-                     (:columns . 10)
-                     (:name . "Project")))
-    (:project-name .  ((:path . (fields project name))
-                       (:columns . 10)
-                       (:name . "Project")))
-    (:parent-type-name . ((:path . (fields parent fields issuetype name))
-                          (:columns . 10)
-                          (:name . "Parent Type")
-                          (:formatter . jira-fmt-issue-type-name)))
-    (:parent-status . ((:path . (fields parent fields status name))
-                          (:columns . 10)
-                          (:name . "Parent Status")
-                          (:formatter . jira-fmt-issue-status)))
-    (:parent-key . ((:path . (fields parent key))
-                    (:columns . 10)
-                    (:name . "Parent Key")
-                    (:formatter . jira-fmt-issue-key)))
-    (:created . ((:path . (fields created))
-                 (:columns . 10)
-                 (:name . "Created")))
-    (:updated . ((:path . (fields updated))
-                 (:columns . 10)
-                 (:name . "Updated")))
-    (:description . ((:path . (fields description))
-                     (:columns . 10)
-                     (:name . "Description")))
-    (:summary . ((:path . (fields summary))
-                 (:columns . 10)
-                 (:name . "Summary")))
-    (:due-date . ((:path . (fields duedate))
-                 (:columns . 10)
-                 (:name . "Due Date")
-                 (:formatter . jira-fmt-date)))
-    (:sprints . ((:path . (fields (custom "Sprint")))
-                 (:columns . 10)
-                 (:name . "Sprints")
-                 (:formatter . jira-fmt-issue-sprints)))
-    (:line . ((:path . (fields (custom "Business line")))
-              (:columns . 10)
-              (:name . "Business Line")
-              (:formatter . jira-fmt-business-line)))
-    (:cost-center . ((:path . (fields (custom "Cost center")))
-                     (:columns . 10)
-                     (:name . "Const Center")
-                     (:formatter . jira-fmt-cost-center)))
-    (:resolution . ((:path . (fields resolution name))
-                    (:columns . 10)
-                    (:name . "Resolution")))))
-
 ;; TODO: It would be nice to make it a defcustom but, currently, we
 ;; need it to always show the key at the beginning and the summary at
 ;; the end of the list, so we can extract it when we create a worklog
@@ -143,10 +47,11 @@
          :progress-percent :work-ratio :remaining-time :summary))
 
 (defcustom jira-issues-max-results 50
-  "Maximum number of Jira issues to retrieve"
+  "Maximum number of Jira issues to retrieve."
   :group 'jira :type 'integer)
 
 (defun jira-issues--api-get-issues (jql callback)
+  "Retrieve issues from the given JQL filter and call CALLBACK function."
   (let* ((parent (lambda (fd) (jira-table-field-parent jira-issues-fields fd)))
          (fields (mapcar parent jira-issues-table-fields)))
     (when jira-debug
@@ -161,20 +66,24 @@
      :callback callback)))
 
 (defun jira-issues--api-filters-and (filters)
+  "Concat all FILTERS with AND."
   (mapconcat (lambda (filter) filter) (remove nil filters) " AND "))
 
 (defun jira-issues--data-format-cell (issue field)
+  "Format the given FIELD from the given ISSUE."
   (let* ((extracted (jira-table-extract-field jira-issues-fields field issue))
          (value (format "%s" (or extracted "")))
          (formatter (jira-table-field-formatter jira-issues-fields field)))
     (if formatter (funcall formatter value) value)))
 
 (defun jira-issues--data-format-issue (issue)
+  "Format the given ISSUE."
   (let ((key (jira-table-extract-field jira-issues-fields :key issue))
         (formatter (lambda (fd) (jira-issues--data-format-cell issue fd))))
     (list key (vconcat (mapcar formatter jira-issues-table-fields)))))
 
-(defun jira-issues--refresh-table (data response)
+(defun jira-issues--refresh-table (data _response)
+  "Refresh the table with the given RESPONSE DATA."
   (let* ((data-alist (json-read-from-string (json-encode data)))
          (issues (alist-get 'issues data-alist))
          (entries (mapcar #'jira-issues--data-format-issue issues)))
@@ -182,6 +91,7 @@
     (tabulated-list-print t)))
 
 (defun jira-issues--refresh ()
+  "Refresh the table."
   (let* ((args (transient-args 'jira-issues-menu))
          (myself (transient-arg-value "--myself" args))
          (current-sprint (transient-arg-value "--current-sprint" args))
@@ -202,11 +112,12 @@
      #'jira-issues--refresh-table)))
 
 (defun jira-issues--filter-invalid-if-jql ()
+  "Return t if JQL filter is set."
   (if transient-current-command
       (transient-arg-value "--jql=" (transient-args transient-current-command))))
 
 (transient-define-prefix jira-issues-menu ()
-  "Show menu for listing Jira Issues"
+  "Show menu for listing Jira Issues."
    :refresh-suffixes t
    :value '("--myself" "--current-sprint")
    [["Arguments"
@@ -220,17 +131,17 @@
      :transient t
      :inapt-if jira-issues--filter-invalid-if-jql
      :choices
-     (lambda () (mapcar (lambda (t) (car t)) jira-statuses)))
+     (lambda () (mapcar (lambda (st) (car st)) jira-statuses)))
     ("p" "Project" "--project="
      :transient t
      :inapt-if jira-issues--filter-invalid-if-jql
      :choices
-     (lambda () (mapcar (lambda (t) (car t)) jira-projects)))
+     (lambda () (mapcar (lambda (prj) (car prj)) jira-projects)))
     ("r" "Resolution" "--resolution="
      :transient t
      :inapt-if jira-issues--filter-invalid-if-jql
      :choices
-     (lambda () (mapcar (lambda (t) (car t)) jira-resolutions)))
+     (lambda () (mapcar (lambda (res) (car res)) jira-resolutions)))
     ("j""JQL filter" "--jql="
      :transient transient--do-call)
     ("v" "Fix Versions" "--version="
@@ -252,7 +163,7 @@
    ("l" "List Jira Issues" tablist-revert)])
 
 (transient-define-prefix jira-issues-actions-menu ()
-  "Show menu for actions on Jira Issues"
+  "Show menu for actions on Jira Issues."
   [[:description "Jira Issues List"
                 ("?" "Show this menu" jira-issues-actions-menu)
                 ("g" "Refresh list" tablist-revert)
@@ -282,7 +193,7 @@
 
 ;;;###autoload (autoload 'jira-issues "jira-issues" nil t)
 (defun jira-issues ()
-  "List Jira issues"
+  "List Jira issues."
   (interactive)
   (pop-to-buffer "*Jira Issues*")
   (delete-other-windows)
@@ -291,7 +202,7 @@
   (tablist-revert))
 
 (define-derived-mode jira-issues-mode tabulated-list-mode "Jira Issues"
-  "Major mode for listing Jira issues"
+  "Major mode for listing Jira issues."
   :interactive nil
   (let* ((name (lambda (fd) (jira-table-field-name jira-issues-fields fd)))
          (columns (lambda (fd) (jira-table-field-columns jira-issues-fields fd)))

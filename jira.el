@@ -6,11 +6,7 @@
 ;; Version: 0.0.1
 ;; Created: 2025-02-16
 ;; URL: https://github.com/unmonoqueteclea/jira.el
-;; Package-Requires: ((emacs "27.1")
-;;                    (request "0.3.0")
-;;                    (tablist "1.1")
-;;                    (transient "0.8.3")
-;;                    (magit-section "4.2.0"))
+;; Package-Requires: ((emacs "29.1") (request "0.3.0") (tablist "1.0") (transient "0.8.3") (magit-section "4.2.0"))
 
 ;; This file is NOT part of GNU Emacs.
 

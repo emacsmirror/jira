@@ -7,6 +7,21 @@
 
 ;; This file is NOT part of GNU Emacs.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
 ;;; Commentary:
 
 ;; Manage Altassian Document Format
@@ -31,9 +46,11 @@
     "text" "mediaInline"))
 
 (defun jira-doc--list-to-str (items sep)
+  "Concatenate ITEMS with SEP."
   (mapconcat #'identity items sep))
 
 (defun jira-doc--format-inline-block(block)
+  "Format inline BLOCK to a string."
   (let ((type (alist-get 'type block))
         (text (alist-get 'text block)))
     (cond ((string= type "hardBreak") "\n")
@@ -43,6 +60,7 @@
           (text (format "%s " text)))))
 
 (defun jira-doc--format-content-block(block)
+  "Format content BLOCK to a string."
   (let* ((type (alist-get 'type block))
          (sep (if (string= type "paragraph") "" "\n"))
          (prefix (if (string= type "listItem") " - " "")))
@@ -56,6 +74,7 @@
                  sep))))))
 
 (defun jira-doc--format-block(block)
+  "Format BLOCK to a string."
   (let ((type (alist-get 'type block)))
     (if (or (member type jira-doc--top-level-blocks)
             (member type jira-doc--child-blocks))
@@ -63,11 +82,12 @@
       (jira-doc--format-inline-block block))))
 
 (defun jira-doc-format (doc)
-  "Format DOC in Jira Document Format to a string"
+  "Format DOC in Jira Document Format to a string."
   (let* ((content (alist-get 'content doc)))
     (jira-doc--list-to-str
      (mapcar (lambda (block) (jira-doc--format-block block)) content)
      "\n")))
 
-
 (provide 'jira-doc)
+
+;;; jira-doc.el ends here

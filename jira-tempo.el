@@ -7,6 +7,21 @@
 
 ;; This file is NOT part of GNU Emacs.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
 ;;; Commentary:
 
 ;; Manage worklogs from Jira Tempo Extension
@@ -36,17 +51,20 @@
     (:description . ((:path . (description))
                (:columns . 70)
                (:name . "Issue description"))))
-  "Fields that can be shown in the tabulated list")
+  "Fields that can be shown in the tabulated list.")
 
 (defvar jira-tempo-table-fields
   '(:key :time :date :description)
-  "Tempo fields to show in the tabulated list")
+  "Tempo fields to show in the tabulated list.")
 
 (defcustom jira-tempo-max-results 50
-  "Maximum number of Tempo worklogs to retrieve"
+  "Maximum number of Tempo worklogs to retrieve."
   :group 'jira :type 'integer)
 
 (defun jira-tempo--api-get-worklogs (callback)
+  "Get worklogs for the current user.
+
+CALLBACK is a function that will be called with the worklogs data."
   (let ((start-end (jira-utils-week-start-and-end (current-time))))
     (jira-api-tempo-call
      "GET" (concat "worklogs/user/" jira-account-id)
@@ -54,10 +72,12 @@
      :callback callback)))
 
 (defun jira-tempo--api-delete-worklog (worklog-id)
+  "Delete a worklog with WORKLOG-ID."
   (jira-api-tempo-call "DELETE" (concat "worklogs/" worklog-id)
-     :callback (lambda (data response) (tablist-revert))))
+     :callback (lambda (_data _response) (tablist-revert))))
 
 (defun jira-tempo--data-accumulate-time-per-day (worklogs)
+  "Accumulate time per day from WORKLOGS."
   (let ((time-per-day (make-hash-table :test 'equal)))
     (dolist (worklog (append worklogs nil))
       (let* ((date (jira-table-extract-field jira-tempo-fields :date worklog))
@@ -67,12 +87,14 @@
     time-per-day))
 
 (defun jira-tempo--data-format-cell (worklog field)
+  "Format FIELD from WORKLOG."
   (let* ((extracted (jira-table-extract-field jira-tempo-fields field worklog))
          (formatter (jira-table-field-formatter jira-tempo-fields field))
          (value (format "%s" (or extracted ""))))
     (if formatter (funcall formatter value) value)))
 
 (defun jira-tempo--data-format-worklogs (worklogs)
+  "Format WORKLOGS for tabulated list."
   (let ((time-per-day (jira-tempo--data-accumulate-time-per-day worklogs)))
     (mapcar
      (lambda (worklog)
@@ -87,7 +109,8 @@
                     (mapcar formatter jira-tempo-table-fields)))))
      worklogs)))
 
-(defun jira-tempo--refresh-table (data response)
+(defun jira-tempo--refresh-table (data _response)
+  "Refresh the table with RESPONSE DATA."
   (let* ((data-alist (json-read-from-string (json-encode data)))
          (worklogs (alist-get 'results data-alist))
          (entries (jira-tempo--data-format-worklogs worklogs)))
@@ -95,10 +118,11 @@
     (tabulated-list-print t t)))
 
 (defun jira-tempo--refresh ()
+  "Refresh the table."
   (jira-tempo--api-get-worklogs #'jira-tempo--refresh-table))
 
 (transient-define-prefix jira-tempo-menu ()
-  "Show menu for actions on Jira Tempo worklogs"
+  "Show menu for actions on Jira Tempo worklogs."
   [["Jira Tempo Worklogs List"
     ("?" "Show this menu" jira-tempo-menu)
     ("g" "Refresh list" tablist-revert)]]
@@ -125,14 +149,14 @@
 
 ;;;###autoload (autoload 'jira-tempo "jira-tempo" nil t)
 (defun jira-tempo ()
-  "List Jira Tempo Worklogs"
+  "List Jira Tempo Worklogs."
   (interactive)
   (pop-to-buffer "*Jira Tempo*")
   (delete-other-windows)
   (jira-api-get-account-id :callback #'jira-tempo-mode))
 
 (define-derived-mode jira-tempo-mode tabulated-list-mode "Jira Tempo"
-  "Major mode for handling a list of Jira Tempo Worklogs"
+  "Major mode for handling a list of Jira Tempo Worklogs."
   :interactive  nil
   (setq tabulated-list-entries '())
   (let ((name (lambda (fd) (jira-table-field-name jira-tempo-fields fd)))
@@ -152,4 +176,4 @@
 
 (provide 'jira-tempo)
 
-;; jira-tempo.el ends here
+;;; jira-tempo.el ends here

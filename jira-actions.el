@@ -7,6 +7,21 @@
 
 ;; This file is NOT part of GNU Emacs.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
 ;;; Commentary:
 
 ;; Manage actions on Jira objects
@@ -17,13 +32,15 @@
 (require 'tablist)
 
 (require 'jira-api)
+(require 'jira-utils)
 
 (defun jira-actions--marked-issue-description ()
-  ;; TODO: This will change if the list of issues fields is changed
+  "TODO: This will change if the list of issues fields is changed."
   (let ((vector (cdr (car (tablist-get-marked-items)))))
     (aref vector (1- (length vector)))))
 
 (defun jira-actions--add-worklog ()
+  "Add a worklog to marked issue."
   (let* ((args (transient-args 'jira-actions-add-worklog-menu))
          (notify (transient-arg-value "--notify-users" args))
          (comment (transient-arg-value "--comment=" args))
@@ -45,10 +62,10 @@
                                           ("content" . ((("type" . "text")
                                                          ("text" . ,comment)))))))))
              ("timeSpent" . ,time))
-     :callback (lambda (data response) (jira-tempo)))))
+     :callback (lambda (_data _response) (jira-tempo)))))
 
 (transient-define-prefix jira-actions-add-worklog-menu ()
-  "Show menu for adding a Worklog to a Jira Issue"
+  "Show menu for adding a Worklog to a Jira Issue."
   :value (lambda () `
            (,(concat "--comment=" (jira-utils-marked-item)
                      ": " (jira-actions--marked-issue-description))
@@ -71,12 +88,13 @@
     (message "Run jira-issues first")))
 
 (defun jira-actions--change-issue ()
+  "Apply user-selected options to marked issue."
   (let* ((args (transient-args 'jira-actions-change-issue-menu))
          (status (transient-arg-value "--status=" args))
          (resolution (transient-arg-value "--resolution=" args))
          (status-id (cdr (assoc status jira-active-issue-transitions)))
          (time-estimate (transient-arg-value "--time-estimate=" args))
-         (hook (lambda (data response) (run-hooks 'jira-issues-changed-hook))))
+         (hook (lambda (_data _response) (run-hooks 'jira-issues-changed-hook))))
     (when status-id
       (jira-api-call
        "POST" (concat "issue/" (jira-utils-marked-item) "/transitions")
@@ -95,14 +113,14 @@
        :callback hook))))
 
 (transient-define-prefix jira-actions-change-issue-menu ()
-  "Show menu for updating a Jira Issue"
+  "Show menu for updating a Jira Issue."
   ["Arguments"
    ("s" "Status" "--status="
     :choices
-    (lambda () (mapcar (lambda (t) (car t)) jira-active-issue-transitions)))
+    (lambda () (mapcar (lambda (tr) (car tr)) jira-active-issue-transitions)))
    ("r" "Resolution" "--resolution="
     :choices
-    (lambda () (mapcar (lambda (t) (car t)) jira-resolutions)))
+    (lambda () (mapcar (lambda (res) (car res)) jira-resolutions)))
    ("e" "Time Estimate" "--time-estimate=")]
   ["Actions"
    ("c" "Change" (lambda () (interactive) (jira-actions--change-issue)))]
@@ -115,6 +133,7 @@
     (message "Run jira-issues first")))
 
 (defun jira-actions-open-issue (issue-key)
+  "Open ISSUE-KEY in browser."
   (browse-url (format "%s/browse/%s" jira-base-url issue-key)))
 
 (provide 'jira-actions)

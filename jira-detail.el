@@ -7,6 +7,21 @@
 
 ;; This file is NOT part of GNU Emacs.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
 ;;; Commentary:
 
 ;; Show information about a specific Jira elements.
@@ -19,6 +34,7 @@
 (require 'jira-api)
 (require 'jira-table)
 (require 'jira-doc)
+(require 'jira-utils)
 
 ;; they override the default formatters specified
 ;; in jira-issues-fields
@@ -27,12 +43,14 @@
     (:parent-key . jira-fmt-issue-key-not-tabulated)))
 
 (defun jira-detail--header (header)
+  "Format HEADER to be used as a header in the detail view."
   (concat
    (propertize header 'face 'italic)
    (when (> (- 16 (string-width header)) 0)
      (make-string (- 16 (string-width header)) ?\s))))
 
 (defun jira-detail--issue-fmt (issue field)
+  "Extract FIELD from ISSUE and format it."
   (let* ((extracted (jira-table-extract-field jira-issues-fields field issue))
          (value (format "%s" (or extracted "")))
          (formatter
@@ -41,6 +59,7 @@
     (if formatter (funcall formatter value) value)))
 
 (defun jira-detail--issue-summary (issue)
+  "Show the summary of the ISSUE."
   (let ((key (jira-detail--issue-fmt issue :key))
         (type (jira-detail--issue-fmt issue :issue-type-name))
         (status (jira-detail--issue-fmt issue :status-name))
@@ -72,6 +91,7 @@
 
 
 (defun jira-detail--issue-team (issue)
+  "Show the team information of the ISSUE."
   (let ((line (jira-detail--issue-fmt issue :line))
         (parent-key (jira-detail--issue-fmt issue :parent-key))
         (parent-type (jira-detail--issue-fmt issue :parent-type-name))
@@ -85,6 +105,7 @@
     (insert (concat (jira-detail--header "Components") components "\n"))))
 
 (defun jira-detail--issue-manager-data (issue)
+  "Show the manager data of the ISSUE."
   (let ((cost-center (jira-detail--issue-fmt issue :cost-center))
         (priority (jira-detail--issue-fmt issue :priority-name))
         (labels (jira-detail--issue-fmt issue :labels))
@@ -99,10 +120,12 @@
     (insert (concat (jira-detail--header "Due Date") due-date "\n"))))
 
 (defun jira-detail--description (issue)
+  "Show the description of the ISSUE."
   (let* ((doc (alist-get 'description (alist-get 'fields issue))))
     (insert  (jira-doc-format doc))))
 
 (cl-defun jira-detail--issue (key issue)
+  "Show the detail information of the ISSUE with KEY."
   (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
     (magit-section-mode)
     ;; avoid horizontal scroll
@@ -139,7 +162,7 @@
   (jira-api-call
    "GET" (concat "issue/" key)
    :callback
-   (lambda (data response)
+   (lambda (data _response)
      (let* ((issue (json-read-from-string (json-encode data))))
        (jira-detail--issue key issue)))))
 

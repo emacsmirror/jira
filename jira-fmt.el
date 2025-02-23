@@ -7,6 +7,21 @@
 
 ;; This file is NOT part of GNU Emacs.
 
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
 ;;; Commentary:
 
 ;; Formatting data to display
@@ -45,22 +60,23 @@
   "Face used to show tags." :group 'jira)
 
 (defcustom jira-statuses-done '("Done" "Closed" "Waiting for QA")
-  "A list of statuses names representing done state"
+  "A list of statuses names representing done state."
   :type '(repeat string) :group 'jira)
 
 (defcustom jira-statuses-progress '("In Progress" "Pull-request")
-  "A list of statuses names representing progress state"
+  "A list of statuses names representing progress state."
   :type '(repeat string) :group 'jira)
 
 (defcustom jira-statuses-todo '("To do" "Backlog")
-  "A list of statuses names representing TODO"
+  "A list of statuses names representing TODO."
   :type '(repeat string) :group 'jira)
 
 (defcustom jira-statuses-error '("Blocked" "Paused")
-  "A list of statuses names representing problems in tasks"
+  "A list of statuses names representing problems in tasks."
   :type '(repeat string) :group 'jira)
 
 (defun jira-fmt--link-action (button)
+  "Action to open the link in BUTTON."
   (browse-url (button-get button 'href)))
 
 (defun jira-fmt-issue-key (issue-id)
@@ -76,11 +92,13 @@
   "Format ISSUE-ID as a link to the issue in Jira (outside a tabulated list)."
   (buttonize
    issue-id
-   (lambda (data) (interactive)
+   (lambda (_data) (interactive)
      (browse-url (concat jira-base-url "/browse/" issue-id)))))
 
 (defun jira-fmt-date (date &optional color-today)
-  "Format DATE as 'YYYY-MM-DD, Day of week' and adding color for current day."
+  "Format DATE as `YYYY-MM-DD, Day of week` and adding color for current day.
+
+COLOR-TODAY is a boolean to color the date if it is today."
   (when (not (string-empty-p date))
       (let ((value (concat date ", " (jira-utils-get-day-of-week date))))
         (if (and color-today
@@ -89,7 +107,7 @@
           (propertize value  'face 'jira-face-date)))))
 
 (defun jira-fmt-time-from-secs (secs)
-  "Format SECS as a string in the form 'XhYm'."
+  "Format SECS as a string in the form `XhYm`."
   (let* ((secs-num (string-to-number (or secs 0)))
          (hours (truncate (/ (float secs-num) 3600)))
          (minutes (truncate (/ (float (% secs-num 3600)) 60))))
@@ -101,7 +119,7 @@
      'face 'jira-face-time)))
 
 (defun jira-fmt-issue-progress (value)
-  "Format progress VALUE as a percentage and adding color"
+  "Format progress VALUE as a percentage and adding color."
   (let ((val (concat (if (or (string-empty-p value) (string= value "-1"))
                          "0" value)
                      "%")))
@@ -110,7 +128,7 @@
           (t val))))
 
 (defun jira-fmt-issue-status (value)
-  "Format status VALUE adding color"
+  "Format status VALUE adding color."
   (cond ((member value jira-statuses-done)
          (propertize (upcase value) 'face 'jira-face-success))
         ((member value jira-statuses-progress)
@@ -131,6 +149,7 @@
       cleaned-str)))
 
 (defun jira-fmt--list-from-regex (regex value)
+  "Extract a list of values from VALUE using REGEX."
   (let* ((pos 0) matches)
   (while (string-match regex value pos)
     (push (match-string 1 value) matches)
@@ -139,24 +158,31 @@
 
 ;; TODO Ugly, but it works, there were problems parsing the JSON
 (defun jira-fmt-issue-fix-versions (value)
+  "Extract a list of fix versions from VALUE."
   (jira-fmt--list-from-regex "(name\\s-+\\.\\s-+\\([^ )]+\\))" value))
 
 (defun jira-fmt-issue-components (value)
+  "Extract a list of components from VALUE."
   (jira-fmt--list-from-regex "(name\\s-+\\.\\s-+\\([^()]+\\))" value))
 
 (defun jira-fmt-issue-sprints (value)
+  "Extract a list of sprints from VALUE."
   (jira-fmt--list-from-regex "(name\\s-+\\.\\s-+\\([^()]+\\))" value))
 
 (defun jira-fmt-cost-center (value)
+  "Extract a list of cost centers from VALUE."
   (jira-fmt--list-from-regex "(value\\s-+\\.\\s-+\\([^()]+\\))" value))
 
 (defun jira-fmt-business-line (value)
+  "Extract a list of business lines from VALUE."
   (jira-fmt--list-from-regex "(value\\s-+\\.\\s-+\\([^()]+\\))" value))
 
 (defun jira-fmt-issue-type-name (value)
+  "Format issue type VALUE."
   (propertize value 'face 'bold))
 
 (defun jira-fmt-bold (value)
+  "Format VALUE as bold."
   (propertize value 'face 'bold))
 
 (provide 'jira-fmt)
