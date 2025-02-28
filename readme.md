@@ -2,6 +2,8 @@
 
 Emacs integration for [Altassian's Jira](https://www.atlassian.com/software/jira).
 
+> If you have no choice but to use Jira, at least do it without leaving Emacs.
+
 Supports listing and filtering issues, viewing issue details,
 modifying certain properties, and adding worklogs.
 
