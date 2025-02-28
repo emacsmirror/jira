@@ -1,6 +1,6 @@
 # jira.el
 
-Emacs integration for [Altassian's Jira](https://www.atlassian.com/software/jira).
+Emacs integration for [Atlassian's Jira](https://www.atlassian.com/software/jira).
 
 > If you have no choice but to use Jira, at least do it without leaving Emacs.
 
