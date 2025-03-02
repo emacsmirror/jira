@@ -169,8 +169,7 @@ with the given PREFIX."
          (days-from-monday (mod (- current-day 1) 7))
          (start-of-week (time-subtract date (days-to-time days-from-monday)))
          (end-of-week (time-add start-of-week (days-to-time 6)))
-         (format-time (lambda (time)
-                        (format-time-string "%Y-%m-%d" time))))
+         (format-time (lambda (time) (format-time-string "%F" time))))
     (list (funcall format-time start-of-week)
           (funcall format-time end-of-week))))
 

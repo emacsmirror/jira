@@ -70,7 +70,7 @@
            (,(concat "--comment=" (jira-utils-marked-item)
                      ": " (jira-actions--marked-issue-description))
             ,(concat "--date="
-                     (format-time-string "%Y-%m-%dT%H:%M:%S.%3N%z" (current-time)))
+                     (format-time-string "%FT%T.%3N%z" (current-time)))
             "--time=1h"))
   ["Arguments"
    ("n" "Notify users" "--notify-users")

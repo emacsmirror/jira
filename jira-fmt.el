@@ -102,7 +102,7 @@ COLOR-TODAY is a boolean to color the date if it is today."
   (when (not (string-empty-p date))
       (let ((value (concat date ", " (jira-utils-get-day-of-week date))))
         (if (and color-today
-                 (string= date (format-time-string "%Y-%m-%d" (current-time))))
+                 (string= date (format-time-string "%F" (current-time))))
             (propertize value  'face 'jira-face-date-today)
           (propertize value  'face 'jira-face-date)))))
 

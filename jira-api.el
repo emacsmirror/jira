@@ -96,7 +96,8 @@
 (cl-defun jira-api-call (verb endpoint &key params data callback)
   "Perform a VERB request to the Jira API ENDPOINT.
 
-PARAMS is a list of cons cells, DATA is the request body, and CALLBACK is the function to call if successful."
+PARAMS is a list of cons cells, DATA is the request body, and CALLBACK
+is the function to call if successful."
   (message "[Jira API Call]: %s %s" verb endpoint)
   (let ((auth (jira-api--auth-header jira-username jira-token)))
     (request

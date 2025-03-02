@@ -212,11 +212,10 @@
 
   (setq tabulated-list-sort-key (cons "Status" nil))
   (setq tabulated-list-padding 2)
-  (add-hook 'tabulated-list-revert-hook 'jira-issues--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook #'jira-issues--refresh nil t)
+  (add-hook 'jira-issues-changed-hook #'tablist-revert)
   (tabulated-list-init-header)
   (tablist-minor-mode))
-
-(add-hook 'jira-issues-changed-hook 'tablist-revert)
 
 (provide 'jira-issues)
 

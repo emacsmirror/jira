@@ -168,7 +168,7 @@ CALLBACK is a function that will be called with the worklogs data."
                       (list (funcall name field) (funcall columns field) t))
                     jira-tempo-table-fields))))
   (setq tabulated-list-padding 2)
-  (add-hook 'tabulated-list-revert-hook 'jira-tempo--refresh nil t)
+  (add-hook 'tabulated-list-revert-hook #'jira-tempo--refresh nil t)
   (tabulated-list-init-header)
   (tablist-minor-mode)
   (tabulated-list-revert)
