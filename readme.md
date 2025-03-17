@@ -2,6 +2,8 @@
 
 Emacs integration for [Atlassian's Jira](https://www.atlassian.com/software/jira).
 
+[![MELPA Stable](https://stable.melpa.org/packages/jira-badge.svg)](https://stable.melpa.org/#/jira)
+
 > If you have no choice but to use Jira, at least do it without leaving Emacs.
 
 Supports listing and filtering issues, viewing issue details,
@@ -30,8 +32,16 @@ Additionally, it provides support for displaying all worklogs from the
 
 
 ## Installation
-This package is not yet available in any official repository (though it's in progress).
-You can install it using [straight.el](https://github.com/radian-software/straight.el)
+This package is available in
+[MELPA](https://github.com/milkypostman/melpa), so you just need to do
+(check `customization` section to find the required configuration):
+
+```elisp
+(use-package jira)
+```
+
+You can also install it using
+[straight.el](https://github.com/radian-software/straight.el)
 
 ```elisp
 (use-package jira
