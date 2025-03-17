@@ -99,6 +99,8 @@
 PARAMS is a list of cons cells, DATA is the request body, and CALLBACK
 is the function to call if successful."
   (message "[Jira API Call]: %s %s" verb endpoint)
+  (when (and jira-debug data)
+    (message "[Jira API Call Data]: %s" (json-encode data)))
   (let ((auth (jira-api--auth-header jira-username jira-token)))
     (request
       (concat (jira-api--url jira-base-url) endpoint)
