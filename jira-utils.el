@@ -173,6 +173,25 @@ with the given PREFIX."
     (list (funcall format-time start-of-week)
           (funcall format-time end-of-week))))
 
+(defun jira-utils-set-time-to-midnight (time)
+  "Set the given TIME to 00:00:00 while keeping the same date."
+  (let* ((decoded (decode-time time))
+         (year (nth 5 decoded))
+         (month (nth 4 decoded))
+         (day (nth 3 decoded)))
+    (encode-time 0 0 0 day month year)))
+
+(defun jira-utils-last-n-dates (date n)
+  "Return a list of dates for the last N days from the given DATE."
+  (let ((dates '())
+	(init-date (jira-utils-set-time-to-midnight date)))
+    (dotimes (i n)
+      (push (format-time-string
+	     "%FT%T.%3N%z"
+	     (time-subtract init-date (days-to-time i)))
+	    dates))
+    (reverse dates)))
+
 (provide 'jira-utils)
 
 ;;; jira-utils.el ends here

@@ -76,8 +76,13 @@
    ("n" "Notify users" "--notify-users")
    ("e" "New estimate" "--new-estimate=")
    ("c" "Comment" "--comment=")
-   ("d" "Date" "--date=")
-   ("t" "Time Spent" "--time=")]
+   ("d" "Date" "--date="
+    :reader (lambda (&rest _)
+	      (completing-read
+	       "Choose an option: "
+	       (jira-utils-last-n-dates (current-time) 7)
+	       nil nil nil 'transient-history)))
+  ("t" "Time Spent" "--time=")]
   ["Actions"
    ("a" "Add worklog"
     (lambda () (interactive) (jira-actions--add-worklog)))]
