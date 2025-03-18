@@ -33,6 +33,7 @@
 
 (require 'jira-api)
 (require 'jira-utils)
+(require 'jira-tempo)
 
 (defun jira-actions--marked-issue-description ()
   "TODO: This will change if the list of issues fields is changed."

@@ -83,10 +83,11 @@
 
 (defun jira-doc-format (doc)
   "Format DOC in Jira Document Format to a string."
-  (let* ((content (alist-get 'content doc)))
-    (jira-doc--list-to-str
-     (mapcar (lambda (block) (jira-doc--format-block block)) content)
-     "\n")))
+  (if (stringp doc) doc
+    (let* ((content (alist-get 'content doc)))
+      (jira-doc--list-to-str
+       (mapcar (lambda (block) (jira-doc--format-block block)) content)
+       "\n"))))
 
 (provide 'jira-doc)
 

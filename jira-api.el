@@ -41,6 +41,11 @@
   "Jira instance URL, like: https://acme.atlassian.net."
   :group 'jira :type 'string)
 
+(defcustom jira-api-version 3
+  "Jira API version (Versions 2 or 3 are allowed)."
+  :group 'jira
+  :type '(choice (const 2) (const  3)))
+
 (defcustom jira-token ""
   "Jira API token."
   :group 'jira :type 'string)
@@ -72,7 +77,10 @@
 
 (defun jira-api--url (base-url)
   "Generate the full URL from BASE-URL for Jira API requests."
-  (concat base-url "/rest/api/3/"))
+  (let ((version (if (numberp jira-api-version)
+		     (number-to-string jira-api-version)
+		   jira-api-version)))
+    (concat base-url "/rest/api/" version "/")))
 
 (defun jira-api--callback-success-log (data _response)
   "Log the RESPONSE DATA of a successful Jira API request."

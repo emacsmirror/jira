@@ -34,10 +34,21 @@ Additionally, it provides support for displaying all worklogs from the
 ## Installation
 This package is available in
 [MELPA](https://github.com/milkypostman/melpa), so you just need to do
-(check `customization` section to find the required configuration):
+(check `Customization` section to find the required configuration):
 
 ```elisp
-(use-package jira)
+(use-package jira
+  :config
+  (setq jira-username "johndoe@acme.com") ;; Jira username (usually, an email)
+  (setq jira-base-url "https://acme.atlassian.net") ;; Jira instance URL
+  ;; API token for Jira
+  ;; See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+  (setq jira-token "foobar123123")
+  (setq jira-api-version 3) ;; Version 2 is also allowed
+  ;; (Optional) API token for JIRA TEMPO plugin
+  ;; See https://apidocs.tempo.io/
+  (setq jira-tempo-token "foobar123123"))
+
 ```
 
 You can also install it using
@@ -47,15 +58,7 @@ You can also install it using
 (use-package jira
   :straight (:host github :repo "unmonoqueteclea/jira.el")
   :demand t
-  :config
-  (setq jira-username "johndoe@acme.com") ;; Jira username (usually, an email)
-  (setq jira-base-url "https://acme.atlassian.net") ;; Jira instance URL
-  ;; API token for JIRA
-  ;; See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
-  (setq jira-token "foobar123123")
-  ;; (Optional) API token for JIRA TEMPO plugin
-  ;; See https://apidocs.tempo.io/
-  (setq jira-tempo-token "foobar123123"))
+  :config ...)
 ```
 
 ## Quickstart
@@ -90,6 +93,8 @@ This is the list of customizations you can set:
 - `jira-username`: **Mandatory**: Jira username (usually, an email)
 - `jira-base-url`: **Mandatory**: Jira instance URL, like: https://acme.atlassian.net
 - `jira-token`: **Mandatory**: Jira REST API token
+- `jira-api-version`: Jira REST API version. Can be `2` or `3` (default: `3`)
+   - ⚠️ Some Jira instances only allow REST API version 2
 - `jira-tempo-token`: Jira [tempo.io](https://www.tempo.io/) API token
 - `jira-debug`: Whether to log jira.el internal processes data, including API responses
 - `jira-issues-max-results`: Maximum number of Jira issues to retrieve
