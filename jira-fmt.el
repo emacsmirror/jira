@@ -99,12 +99,13 @@
   "Format DATE as `YYYY-MM-DD, Day of week` and adding color for current day.
 
 COLOR-TODAY is a boolean to color the date if it is today."
-  (when (not (string-empty-p date))
+  (if (and (stringp date) (not (string-empty-p date)))
       (let ((value (concat date ", " (jira-utils-get-day-of-week date))))
         (if (and color-today
                  (string= date (format-time-string "%F" (current-time))))
             (propertize value  'face 'jira-face-date-today)
-          (propertize value  'face 'jira-face-date)))))
+          (propertize value  'face 'jira-face-date)))
+    date))
 
 (defun jira-fmt-time-from-secs (secs)
   "Format SECS as a string in the form `XhYm`."

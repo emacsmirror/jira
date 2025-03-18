@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.1 (2025-03-18)
+- Fix bug for missing fields in issue detail view
+
 ## 0.1.0 (2025-03-18)
 - Allow configuring Jira REST API Version
 

@@ -65,7 +65,7 @@ ALL-FIELDS is the list of all fields available in the JIRA instance."
             (setq result
                   (alist-get
                    (if (listp path) ;; custom fields
-                       (intern (cdr (assoc (car (cdr path)) jira-fields)))
+                       (intern (or (cdr (assoc (car (cdr path)) jira-fields)) ""))
                      path)
                    result)))
           result)
