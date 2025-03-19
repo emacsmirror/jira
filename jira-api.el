@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(require 'auth-source)
 (require 'request)
 
 (defgroup jira nil "Emacs interface to Jira."
@@ -66,6 +67,29 @@
 (defvar jira-resolutions nil "Jira allowed resolutions.")
 (defvar jira-projects nil "Jira projects (5 most recent).")
 (defvar jira-projects-versions nil "Jira project versions (releases).")
+
+(defun jira-api--username (host)
+  "Retrieve the username for HOST from config or auth-source."
+  (if (and jira-username (not (string= "" jira-username)))
+      jira-username
+      (let* ((auth-host (replace-regexp-in-string "https://" "" host))
+	     (auth-info (car (auth-source-search :host auth-host :require '(:user)))))
+	(when auth-info (plist-get auth-info :user)))))
+
+(defun jira-api--token (host)
+  "Retrieve the token for HOST from config or auth-source."
+  (if (and jira-token (not (string= "" jira-token)))
+      jira-token
+      (let* ((auth-host (replace-regexp-in-string "https://" "" host))
+	     (auth-info (car (auth-source-search :host auth-host :require '(:secret)))))
+	(when auth-info (funcall (plist-get auth-info :secret))))))
+
+(defun jira-api--tempo-token ()
+  "Retrieve the token for HOST from config or auth-source."
+  (if (and jira-tempo-token (not (string= "" jira-tempo-token)))
+      jira-tempo-token
+      (let* ((auth-info (car (auth-source-search :host "tempo.io" :require '(:secret)))))
+	(when auth-info (funcall (plist-get auth-info :secret))))))
 
 (defun jira-api--auth-header (username token)
   "Generate the Authorization header for Jira requests with USERNAME and TOKEN."
@@ -109,7 +133,9 @@ is the function to call if successful."
   (message "[Jira API Call]: %s %s" verb endpoint)
   (when (and jira-debug data)
     (message "[Jira API Call Data]: %s" (json-encode data)))
-  (let ((auth (jira-api--auth-header jira-username jira-token)))
+  (let* ((username (jira-api--username jira-base-url))
+	 (token (jira-api--token jira-base-url))
+	 (auth (jira-api--auth-header username token)))
     (request
       (concat (jira-api--url jira-base-url) endpoint)
       :type verb
@@ -128,12 +154,11 @@ is the function to call if successful."
               (lambda (&key response error-thrown &allow-other-keys)
                 (jira-api--callback-error-log response error-thrown))))))
 
-
 (cl-defun jira-api-tempo-call (verb endpoint &key params callback)
   "Perform a VERB request to the Jira Tempo API ENDPOINT.
 Calling CALLBACK if successful and passing PARAMS."
   (message "[Jira Tempo Call]: %s %s" verb endpoint)
-  (let ((auth (jira-api--tempo-auth-header jira-tempo-token)))
+  (let ((auth (jira-api--tempo-auth-header (jira-api--tempo-token))))
     (request
       (concat jira-tempo-url endpoint)
       :type verb

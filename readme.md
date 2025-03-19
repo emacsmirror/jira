@@ -30,17 +30,15 @@ Additionally, it provides support for displaying all worklogs from the
 
 ![List Worklogs](doc/list-worklogs.png)
 
-
 ## Installation
-This package is available in
-[MELPA](https://github.com/milkypostman/melpa), so you just need to do
-(check `Customization` section to find the required configuration):
+This package is available in [MELPA](https://github.com/milkypostman/melpa),
+so you just need to do:
 
 ```elisp
 (use-package jira
   :config
-  (setq jira-username "johndoe@acme.com") ;; Jira username (usually, an email)
   (setq jira-base-url "https://acme.atlassian.net") ;; Jira instance URL
+  (setq jira-username "johndoe@acme.com") ;; Jira username (usually, an email)
   ;; API token for Jira
   ;; See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
   (setq jira-token "foobar123123")
@@ -48,7 +46,6 @@ This package is available in
   ;; (Optional) API token for JIRA TEMPO plugin
   ;; See https://apidocs.tempo.io/
   (setq jira-tempo-token "foobar123123"))
-
 ```
 
 You can also install it using
@@ -61,8 +58,49 @@ You can also install it using
   :config ...)
 ```
 
-## Quickstart
+## Authentication
+`jira.el` supports two methods for authenticating with the Jira REST API:
 
+1.  **Configuration variables:** You can directly set the
+    `jira-username` and `jira-token` variables (and `jira-tempo-token`
+    if you use it) in your Emacs configuration (e.g., your `init.el`
+    or `config.el`).  This is often the simplest way to get started.
+
+    ```elisp
+      (setq jira-username "johndoe@acme.com") ;; Jira username (usually, an email)
+	  ;; API token for Jira
+	  ;; See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+	  (setq jira-token "foobar123123")
+    ```
+
+    While convenient, storing your token directly in your Emacs
+    configuration can pose a security risk if your configuration file
+    is not properly protected. Consider using `auth-source` for more
+    secure storage.
+
+2.  **`auth-source`:** This is the recommended and more secure
+    method. `auth-source` is an Emacs library for managing
+    credentials.  It allows you to store your Jira username and API
+    token in a secure location (like `~/.authinfo.gpg`) and `jira.el`
+    will retrieve them when needed.
+
+    -  **Configure `auth-source`:** Add an entry to your
+    `~/.authinfo` or `~/.authinfo.gpg` file (create the file if it
+    doesn't exist).
+
+	```
+	machine acme.atlassian.net login johndoe@acme.com port https password foobar123123
+	```
+
+	And, if you use `tempo.io`:
+
+	```
+	machine tempo.io port https password foobar123123
+	```
+
+    **`jira.el` will automatically use `auth-source` if `jira-username` and `jira-token` are not explicitly set.**
+
+## Quickstart
 Use `M-x jira-issues` to check the list of issues assigned to the
 configured user for the active sprint. Once the list is loaded, press
 `?` to see the available actions. You can modify the filters, update
@@ -90,9 +128,9 @@ week.
 
 This is the list of customizations you can set:
 
-- `jira-username`: **Mandatory**: Jira username (usually, an email)
 - `jira-base-url`: **Mandatory**: Jira instance URL, like: https://acme.atlassian.net
-- `jira-token`: **Mandatory**: Jira REST API token
+- `jira-username`: Jira username (usually, an email)
+- `jira-token`: Jira REST API token
 - `jira-api-version`: Jira REST API version. Can be `2` or `3` (default: `3`)
    - ⚠️ Some Jira instances only allow REST API version 2
 - `jira-tempo-token`: Jira [tempo.io](https://www.tempo.io/) API token

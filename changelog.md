@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.0 (2025-03-19)
+- Add support for authentication with `auth-source`
+
 ## 0.1.1 (2025-03-18)
 - Fix bug for missing fields in issue detail view
 

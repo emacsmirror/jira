@@ -3,7 +3,7 @@
 ;; Copyright (C) 2025 Pablo González Carrizo
 
 ;; Author: Pablo González Carrizo <unmonoqueteclea@gmail.com>
-;; Version: 0.1.1
+;; Version: 0.2.0
 ;; Created: 2025-02-16
 ;; URL: https://github.com/unmonoqueteclea/jira.el
 ;; Package-Requires: ((emacs "29.1") (request "0.3.0") (tablist "1.0") (transient "0.8.3") (magit-section "4.2.0"))
