@@ -28,7 +28,6 @@
 
 ;;; Code:
 
-(require 'jira-api)
 (require 'jira-utils)
 
 (defface jira-face-link
@@ -185,6 +184,10 @@ COLOR-TODAY is a boolean to color the date if it is today."
 (defun jira-fmt-bold (value)
   "Format VALUE as bold."
   (propertize value 'face 'bold))
+
+(defun jira-fmt-line-endings (text)
+  "Convert Windows line endings to Unix ones in the given TEXT."
+  (replace-regexp-in-string "\r\n" "\n" text))
 
 (provide 'jira-fmt)
 

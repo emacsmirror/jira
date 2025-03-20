@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.2 (2025-03-20)
+- Convert windows line endings to unix ones in issues detail
+
 ## 0.2.1 (2025-03-20)
 - Add constant with package version: `jira-version`
 

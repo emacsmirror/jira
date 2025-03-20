@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'jira-fmt)
+
 ;; these blocks contain the content property
 (defconst jira-doc--top-level-blocks
   '("blockquote" "bulletList" "codeBlock" "expand" "heading" "mediaGroup"
@@ -83,7 +85,8 @@
 
 (defun jira-doc-format (doc)
   "Format DOC in Jira Document Format to a string."
-  (if (stringp doc) doc
+  (if (stringp doc)
+      (jira-fmt-line-endings doc)
     (let* ((content (alist-get 'content doc)))
       (jira-doc--list-to-str
        (mapcar (lambda (block) (jira-doc--format-block block)) content)
