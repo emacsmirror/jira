@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1 (2025-03-20)
+- Add constant with package version: `jira-version`
+
 ## 0.2.0 (2025-03-19)
 - Add support for authentication with `auth-source`
 
