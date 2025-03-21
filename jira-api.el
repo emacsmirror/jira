@@ -59,6 +59,10 @@
   "Whether to log jira.el internal processes data, including API responses."
   :group 'jira :type 'boolean)
 
+(defcustom jira-token-is-personal-access-token nil
+  "Whether the provided token is a Personal Access Token (not an JIRA API Token)"
+  :group 'jira :type'boolean)
+
 (defvar jira-tempo-url "https://api.tempo.io/4/" "Jira Tempo API URL.")
 (defvar jira-account-id nil "Jira account ID of the current user.")
 (defvar jira-fields nil "Jira custom fields available for the current user.")
@@ -93,7 +97,9 @@
 
 (defun jira-api--auth-header (username token)
   "Generate the Authorization header for Jira requests with USERNAME and TOKEN."
-  (format "Basic %s" (base64-encode-string (concat username ":" token) t)))
+  (if jira-token-is-personal-access-token
+      (format "Bearer %s" token)
+    (format "Basic %s" (base64-encode-string (concat username ":" token) t))))
 
 (defun jira-api--tempo-auth-header (token)
   "Generate the Authorization header for Jira Tempo API requests with TOKEN."

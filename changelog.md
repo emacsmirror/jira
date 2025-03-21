@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0 (2024-03-21)
+- Add support for Jira Personal Access Token (PAT)
+
 ## 0.2.2 (2025-03-20)
 - Convert windows line endings to unix ones in issues detail
 

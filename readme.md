@@ -42,6 +42,7 @@ so you just need to do:
   ;; API token for Jira
   ;; See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
   (setq jira-token "foobar123123")
+  (setq jira-token-is-personal-access-token nil)
   (setq jira-api-version 3) ;; Version 2 is also allowed
   ;; (Optional) API token for JIRA TEMPO plugin
   ;; See https://apidocs.tempo.io/
@@ -99,6 +100,13 @@ You can also install it using
 	```
 
     **`jira.el` will automatically use `auth-source` if `jira-username` and `jira-token` are not explicitly set.**
+
+	⚠️ If you are using a Jira [**Personal Access Token (PAT)**](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) instead
+    of an **API Token**, you will need to set `jira-token-is-personal-access-token`:
+
+	```elisp
+	(setq jira-token-is-personal-access-token t)
+	```
 
 ## Quickstart
 Use `M-x jira-issues` to check the list of issues assigned to the
