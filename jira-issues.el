@@ -145,7 +145,7 @@ This information is added to worklogs to make it easier to identify")
 (transient-define-prefix jira-issues-menu ()
   "Show menu for listing Jira Issues."
    :refresh-suffixes t
-   :value '("--myself" "--current-sprint")
+   :value '("--myself")
    [["Arguments"
     ("m" "Just from myself" "--myself"
      :transient t

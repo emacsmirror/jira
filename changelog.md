@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 (2025-03-23)
+- Add `jira-issues-table-fields` so that users can select the fields
+  to be visualized in the table
+- `--current-sprint` is not set by default any more when retrieving
+  issues
+
+
 ## 0.3.0 (2024-03-21)
 - Add support for Jira Personal Access Token (PAT)
 

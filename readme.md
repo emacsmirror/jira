@@ -144,7 +144,7 @@ This is the list of customizations you can set:
 - `jira-tempo-token`: Jira [tempo.io](https://www.tempo.io/) API token
 - `jira-debug`: Whether to log jira.el internal processes data, including API responses
 - `jira-issues-table-fields`: Fields to show in the issues table.
-   Allowed values are defined in `jira-issues-fields`.
+   Allowed values are defined in `jira-issues-fields`. Example: `'(:key :issue-type-name :status-name :assignee-name :progress-percent :work-ratio :remaining-time :summary)`
 - `jira-issues-max-results`: Maximum number of Jira issues to retrieve
 - `jira-tempo-max-results`: Maximum number of Tempo worklogs to retrieve
 - `jira-statuses-done`: A list of statuses names representing done state
