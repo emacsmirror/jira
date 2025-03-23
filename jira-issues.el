@@ -39,23 +39,33 @@
 (require 'jira-actions)
 (require 'jira-detail)
 
-;; TODO: It would be nice to make it a defcustom but, currently, we
-;; need it to always show the key at the beginning and the summary at
-;; the end of the list, so we can extract it when we create a worklog
-(defvar jira-issues-table-fields
+(defcustom jira-issues-table-fields
   '(:key :issue-type-name :status-name :assignee-name
-         :progress-percent :work-ratio :remaining-time :summary))
+         :progress-percent :work-ratio :remaining-time :summary)
+  "Fields to show in the Jira issues table.
+
+Allowed values in variable jira-issues-fields."
+  :group 'jira :type 'list)
 
 (defcustom jira-issues-max-results 50
   "Maximum number of Jira issues to retrieve."
   :group 'jira :type 'integer)
 
+;; files that we always want to retrieve because they are used
+;; in some operations
+(defvar jira-issues-required-fields '("key" "summary"))
+
+(defvar jira-issues-key-summary-map nil
+  "Hash map to store issue keys and the associated summaries.
+This information is added to worklogs to make it easier to identify")
+
 (defun jira-issues--api-get-issues (jql callback)
   "Retrieve issues from the given JQL filter and call CALLBACK function."
   (let* ((parent (lambda (fd) (jira-table-field-parent jira-issues-fields fd)))
-         (fields (mapcar parent jira-issues-table-fields)))
+         (fields (append (mapcar parent jira-issues-table-fields)
+			 jira-issues-required-fields)))
     (when jira-debug
-        (message (concat "Get issues with jql "jql)))
+        (message (concat "Get issues with jql " jql)))
     (jira-api-call
      "GET" "search"
      :params `(("jql" . ,jql)
@@ -82,12 +92,28 @@
         (formatter (lambda (fd) (jira-issues--data-format-cell issue fd))))
     (list key (vconcat (mapcar formatter jira-issues-table-fields)))))
 
+(defun jira-issues--store-key-summary (issue)
+  "Store the KEY and SUMMARY of the given ISSUE."
+  (let ((key (jira-table-extract-field jira-issues-fields :key issue))
+	(summary (jira-table-extract-field jira-issues-fields :summary issue)))
+    (puthash key summary jira-issues-key-summary-map)))
+
+(defun jira-issues-store-issues-info (issues)
+  "Store the KEY and SUMMARY of the given ISSUES."
+  (let ((map (make-hash-table :test 'equal)))
+    (cl-loop
+     for issue across issues
+     do (let ((key (jira-table-extract-field jira-issues-fields :key issue))
+              (summary (jira-table-extract-field jira-issues-fields :summary issue)))
+          (puthash key summary map)))
+    map))
+
 (defun jira-issues--refresh-table (data _response)
   "Refresh the table with the given RESPONSE DATA."
   (let* ((data-alist (json-read-from-string (json-encode data)))
-         (issues (alist-get 'issues data-alist))
-         (entries (mapcar #'jira-issues--data-format-issue issues)))
-    (setq tabulated-list-entries entries)
+         (issues (alist-get 'issues data-alist)))
+    (setq tabulated-list-entries (mapcar #'jira-issues--data-format-issue issues))
+    (setq jira-issues-key-summary-map (jira-issues-store-issues-info issues))
     (tabulated-list-print t)))
 
 (defun jira-issues--refresh ()

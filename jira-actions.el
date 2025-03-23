@@ -36,9 +36,9 @@
 (require 'jira-tempo)
 
 (defun jira-actions--marked-issue-description ()
-  "TODO: This will change if the list of issues fields is changed."
-  (let ((vector (cdr (car (tablist-get-marked-items)))))
-    (aref vector (1- (length vector)))))
+  "Get the description of the marked issue from `jira-issues-key-summary-map'."
+  (let ((issue-key (jira-utils-marked-item)))
+    (gethash issue-key jira-issues-key-summary-map)))
 
 (defun jira-actions--add-worklog ()
   "Add a worklog to marked issue."
