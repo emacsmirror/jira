@@ -189,6 +189,10 @@ COLOR-TODAY is a boolean to color the date if it is today."
   "Convert Windows line endings to Unix ones in the given TEXT."
   (replace-regexp-in-string "\r\n" "\n" text))
 
+(defun jira-fmt-code (text)
+  "Format TEXT as code, with a monospaced font and a light background."
+  (propertize text 'face '(:family "Monospace" :background "#f0f0f0")))
+
 (provide 'jira-fmt)
 
 ;;; jira-fmt.el ends here

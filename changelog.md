@@ -6,7 +6,6 @@
 - `--current-sprint` is not set by default any more when retrieving
   issues
 
-
 ## 0.3.0 (2024-03-21)
 - Add support for Jira Personal Access Token (PAT)
 

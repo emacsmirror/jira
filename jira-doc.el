@@ -51,6 +51,12 @@
   "Concatenate ITEMS with SEP."
   (mapconcat #'identity items sep))
 
+(defun jira-doc--is-bold(block)
+  "Check if BLOCK should be shown with bold text."
+  (let ((marks (alist-get 'marks block)))
+    (cl-find-if (lambda (m) (equal m '((type . "strong")))) marks)))
+
+
 (defun jira-doc--format-inline-block(block)
   "Format inline BLOCK to a string."
   (let ((type (alist-get 'type block))
@@ -59,21 +65,28 @@
           ((string= type "inlineCard")
            (let* ((url (alist-get 'url (alist-get 'attrs block))))
              (buttonize url `(lambda (data) (interactive) (browse-url ,url)))))
-          (text (format "%s " text)))))
+          (text (let ((text-str (format "%s " text)))
+		  (if (jira-doc--is-bold block)
+		      (jira-fmt-bold text-str)
+		    text-str))))))
 
 (defun jira-doc--format-content-block(block)
   "Format content BLOCK to a string."
   (let* ((type (alist-get 'type block))
          (sep (if (string= type "paragraph") "" "\n"))
-         (prefix (if (string= type "listItem") " - " "")))
+         (prefix (cond ((string= type "listItem") " - ") (t "")))
+	 (content
+	  (concat prefix
+		  (jira-doc--list-to-str
+		   (mapcar (lambda (b) (jira-doc--format-block b))
+			   (alist-get 'content block))
+                   sep))))
     (cond
      ((string= type "table")
       "\n<TABLES NOT SUPPORTED BY jira.el>\n")
-     (t (concat prefix
-                (jira-doc--list-to-str
-                 (mapcar (lambda (b) (jira-doc--format-block b))
-                         (alist-get 'content block))
-                 sep))))))
+     ((string= type "codeBlock")
+      (concat "\n" (jira-fmt-code content) "\n"))
+     (t content))))
 
 (defun jira-doc--format-block(block)
   "Format BLOCK to a string."
