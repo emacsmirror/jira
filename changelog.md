@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 (2025-04-24)
+- Add support for bold text and code in docs
+- Show comments in issue detail view
+
 ## 0.4.0 (2025-03-23)
 - Add `jira-issues-table-fields` so that users can select the fields
   to be visualized in the table

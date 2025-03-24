@@ -106,6 +106,26 @@ COLOR-TODAY is a boolean to color the date if it is today."
           (propertize value  'face 'jira-face-date)))
     date))
 
+(defun jira-fmt-datetime (date)
+  "Format an ISO 8601 date string into a human-readable format."
+  (let* ((parsed-time (parse-time-string date))
+         (year (nth 5 parsed-time))
+         (month (nth 4 parsed-time))
+         (day (nth 3 parsed-time))
+         (hour (nth 2 parsed-time))
+         (minute (nth 1 parsed-time))
+         (second (nth 0 parsed-time))
+         (timezone (if (string-match "\\([+-][0-9]\\{2\\}\\)\\([0-9]\\{2\\}\\)$" date)
+                       (format "UTC%s:%s"
+                               (match-string 1 date)
+                               (match-string 2 date))
+                     "UTC")))
+    (propertize
+     (format "%s %d, %d, %02d:%02d:%02d (%s)"
+            (format-time-string "%B" (encode-time second minute hour day month year))
+            day year hour minute second timezone)
+     'face 'jira-face-date)))
+
 (defun jira-fmt-time-from-secs (secs)
   "Format SECS as a string in the form `XhYm`."
   (let* ((secs-num (string-to-number (or secs 0)))

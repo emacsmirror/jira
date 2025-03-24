@@ -148,8 +148,42 @@
         (magit-insert-section (description nil nil)
           (magit-insert-heading "Description")
           (magit-insert-section-body
-            (jira-detail--description issue)))))
+            (jira-detail--description issue)
+	    (insert "\n\n")))))
     (pop-to-buffer (current-buffer))))
+
+
+(defun jira-detail--comment-author (comment)
+  "Show the author of the COMMENT."
+  (concat
+   (jira-fmt-bold (alist-get 'displayName (alist-get 'author comment)))
+   " @ "
+   (jira-fmt-datetime (alist-get 'updated comment))))
+
+(defun jira-detail--comments (key comments)
+  "Format and insert COMMENTS from issue KE "
+  (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (magit-insert-section (jira-issue-comments nil nil)
+	(magit-insert-section (comments-list nil nil)
+          (magit-insert-heading "Comments")
+          (magit-insert-section-body
+	    (mapcar (lambda (comment)
+		      (magit-insert-section (comment nil nil)
+			(magit-insert-heading (jira-detail--comment-author comment))
+			(magit-insert-section-body
+			  (insert (jira-doc-format (alist-get 'body comment)))
+			  (insert "\n"))))
+		    comments)))))))
+
+(defun jira-detail--show-comments (key)
+  "Retrieve and display comments for issue KEY."
+  (jira-api-call
+   "GET" (format "issue/%s/comment" key)
+   :callback
+   (lambda (data _response)
+     (jira-detail--comments key (alist-get 'comments data)))))
 
 (defun jira-detail-show-issue (key)
   "Retrieve and show the detail information of the issue with KEY."
@@ -158,7 +192,8 @@
    :callback
    (lambda (data _response)
      (let* ((issue (json-read-from-string (json-encode data))))
-       (jira-detail--issue key issue)))))
+       (jira-detail--issue key issue)
+       (jira-detail--show-comments key)))))
 
 
 (provide 'jira-detail)
