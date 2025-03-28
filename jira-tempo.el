@@ -125,7 +125,8 @@ CALLBACK is a function that will be called with the worklogs data."
   "Show menu for actions on Jira Tempo worklogs."
   [["Jira Tempo Worklogs List"
     ("?" "Show this menu" jira-tempo-menu)
-    ("g" "Refresh list" tablist-revert)]]
+    ("g" "Refresh list" tablist-revert)
+    ("I" "Jump to issues" jira-issues)]]
   [[:description
     (lambda () (jira-utils-transient-description "Actions on selected worklog"))
     :inapt-if-not jira-utils-marked-item
@@ -133,13 +134,13 @@ CALLBACK is a function that will be called with the worklogs data."
      (lambda () (interactive)
        (jira-tempo--api-delete-worklog
         (format "%s"(jira-utils-marked-item)))))]]
-
   (interactive)
   (transient-setup 'jira-tempo-menu))
 
 (defvar jira-tempo-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "?" 'jira-tempo-menu)
+    (define-key map "I" 'jira-issues)
     (define-key map "D"
                 (lambda () (interactive)
                   (jira-tempo--api-delete-worklog
@@ -152,7 +153,6 @@ CALLBACK is a function that will be called with the worklogs data."
   "List Jira Tempo Worklogs."
   (interactive)
   (pop-to-buffer "*Jira Tempo*")
-  (delete-other-windows)
   (jira-api-get-account-id :callback #'jira-tempo-mode))
 
 (define-derived-mode jira-tempo-mode tabulated-list-mode "Jira Tempo"

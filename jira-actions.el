@@ -63,7 +63,9 @@
                                           ("content" . ((("type" . "text")
                                                          ("text" . ,comment)))))))))
              ("timeSpent" . ,time))
-     :callback (lambda (_data _response) (jira-tempo)))))
+     :callback (lambda (_data _response)
+                  (kill-buffer "*Jira Issues*")
+                  (jira-tempo)))))
 
 (transient-define-prefix jira-actions-add-worklog-menu ()
   "Show menu for adding a Worklog to a Jira Issue."

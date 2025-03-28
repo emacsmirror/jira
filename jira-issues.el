@@ -193,7 +193,8 @@ This information is added to worklogs to make it easier to identify")
   [[:description "Jira Issues List"
                 ("?" "Show this menu" jira-issues-actions-menu)
                 ("g" "Refresh list" tablist-revert)
-                ("l" "List Jira Issues menu" jira-issues-menu)]]
+                ("l" "List Jira Issues menu" jira-issues-menu)
+		("T" "Jump to Tempo worklogs" jira-tempo)]]
   [[:description
     (lambda () (jira-utils-transient-description "Actions on issue"))
     :inapt-if-not jira-utils-marked-item
@@ -210,6 +211,7 @@ This information is added to worklogs to make it easier to identify")
   (let ((map (make-sparse-keymap)))
     (define-key map "?" 'jira-issues-actions-menu)
     (define-key map "l" 'jira-issues-menu)
+    (define-key map "T" 'jira-tempo)
     (define-key map (kbd "c")
 		(lambda () (interactive)
 		  (jira-issues--copy-issue-id-to-clipboard)))
@@ -234,7 +236,6 @@ This information is added to worklogs to make it easier to identify")
   "List Jira issues."
   (interactive)
   (pop-to-buffer "*Jira Issues*")
-  (delete-other-windows)
   (jira-issues-mode)
   (jira-api-get-basic-data)
   (tablist-revert))
