@@ -35,6 +35,9 @@
 (require 'jira-fmt)
 (require 'jira-table)
 
+;; since we can't require jira-issues, we need to declare the function
+(declare-function jira-issues "jira-issues")
+
 (defvar jira-tempo-fields
   '((:key . ((:path . (tempoWorklogId))
                (:columns . 10)
@@ -121,12 +124,18 @@ CALLBACK is a function that will be called with the worklogs data."
   "Refresh the table."
   (jira-tempo--api-get-worklogs #'jira-tempo--refresh-table))
 
+(defun jira-tempo--jump-to-issues ()
+  "Jump to issues buffer, closing this one."
+  (kill-buffer (buffer-name))
+  (jira-issues))
+
 (transient-define-prefix jira-tempo-menu ()
   "Show menu for actions on Jira Tempo worklogs."
   [["Jira Tempo Worklogs List"
     ("?" "Show this menu" jira-tempo-menu)
     ("g" "Refresh list" tablist-revert)
-    ("I" "Jump to issues" jira-issues)]]
+    ("I" "Jump to issues"
+     (lambda () (interactive) (jira-tempo--jump-to-issues)))]]
   [[:description
     (lambda () (jira-utils-transient-description "Actions on selected worklog"))
     :inapt-if-not jira-utils-marked-item
@@ -140,7 +149,8 @@ CALLBACK is a function that will be called with the worklogs data."
 (defvar jira-tempo-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "?" 'jira-tempo-menu)
-    (define-key map "I" 'jira-issues)
+    (define-key map "I"
+		(lambda () (interactive) (jira-tempo--jump-to-issues)))
     (define-key map "D"
                 (lambda () (interactive)
                   (jira-tempo--api-delete-worklog
@@ -152,7 +162,7 @@ CALLBACK is a function that will be called with the worklogs data."
 (defun jira-tempo ()
   "List Jira Tempo Worklogs."
   (interactive)
-  (pop-to-buffer "*Jira Tempo*")
+  (switch-to-buffer "*Jira Tempo*")
   (jira-api-get-account-id :callback #'jira-tempo-mode))
 
 (define-derived-mode jira-tempo-mode tabulated-list-mode "Jira Tempo"

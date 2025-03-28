@@ -188,13 +188,19 @@ This information is added to worklogs to make it easier to identify")
   ["Actions"
    ("l" "List Jira Issues" tablist-revert)])
 
+(defun jira-issues--jump-to-tempo ()
+  "Jump to Tempo worklogs, closing current buffer."
+  (kill-buffer (buffer-name))
+  (jira-tempo))
+
 (transient-define-prefix jira-issues-actions-menu ()
   "Show menu for actions on Jira Issues."
   [[:description "Jira Issues List"
                 ("?" "Show this menu" jira-issues-actions-menu)
                 ("g" "Refresh list" tablist-revert)
                 ("l" "List Jira Issues menu" jira-issues-menu)
-		("T" "Jump to Tempo worklogs" jira-tempo)]]
+		("T" "Jump to Tempo worklogs"
+		 (lambda () (interactive) (jira-issues--jump-to-tempo)))]]
   [[:description
     (lambda () (jira-utils-transient-description "Actions on issue"))
     :inapt-if-not jira-utils-marked-item
@@ -211,7 +217,8 @@ This information is added to worklogs to make it easier to identify")
   (let ((map (make-sparse-keymap)))
     (define-key map "?" 'jira-issues-actions-menu)
     (define-key map "l" 'jira-issues-menu)
-    (define-key map "T" 'jira-tempo)
+    (define-key map "T"
+		(lambda () (interactive) (jira-issues--jump-to-tempo)))
     (define-key map (kbd "c")
 		(lambda () (interactive)
 		  (jira-issues--copy-issue-id-to-clipboard)))
@@ -235,7 +242,7 @@ This information is added to worklogs to make it easier to identify")
 (defun jira-issues ()
   "List Jira issues."
   (interactive)
-  (pop-to-buffer "*Jira Issues*")
+  (switch-to-buffer "*Jira Issues*")
   (jira-issues-mode)
   (jira-api-get-basic-data)
   (tablist-revert))
