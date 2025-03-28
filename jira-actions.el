@@ -85,8 +85,7 @@
 	       nil nil nil 'transient-history)))
   ("t" "Time Spent" "--time=")]
   ["Actions"
-   ("a" "Add worklog"
-    (lambda () (interactive) (jira-actions--add-worklog)))]
+   ("a" "Add worklog" (lambda () (interactive) (jira-actions--add-worklog)))]
 
   (interactive)
   (if (jira-utils-marked-item)
