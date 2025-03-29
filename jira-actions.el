@@ -32,8 +32,9 @@
 (require 'tablist)
 
 (require 'jira-api)
-(require 'jira-utils)
+(require 'jira-doc)
 (require 'jira-tempo)
+(require 'jira-utils)
 
 (defun jira-actions--marked-issue-description ()
   "Get the description of the marked issue from `jira-issues-key-summary-map'."
@@ -142,6 +143,15 @@
 (defun jira-actions-open-issue (issue-key)
   "Open ISSUE-KEY in browser."
   (browse-url (format "%s/browse/%s" jira-base-url issue-key)))
+
+(defun jira-actions-add-comment (issue-key text callback)
+  "Create a comment to the issue with the given ISSUE-KEY."
+  (jira-api-call
+   "POST" (concat "issue/" issue-key "/comment")
+   :data `(("body" . ,(jira-doc-build text)))
+   :callback (lambda (_data _response)
+               (message "Comment added to %s" issue-key)
+	       (funcall callback))))
 
 (provide 'jira-actions)
 

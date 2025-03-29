@@ -1,11 +1,14 @@
 # Changelog
 
-## 0.6.0 (2025-04-24)
+## 0.7.0 (2025-03-29):
+- Add comments from jira detail view
+
+## 0.6.0 (2025-03-28)
 - Add keybinding in issue to jump to tempo and the other way around.
 - Close the jira issues buffer before I start the jira-tempo one, to avoid issues
 - Avoid deleting other windows when opening jira-issues
 
-## 0.5.0 (2025-04-24)
+## 0.5.0 (2025-03-24)
 - Add support for bold text and code in docs
 - Show comments in issue detail view
 

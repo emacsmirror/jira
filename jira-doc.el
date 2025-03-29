@@ -24,7 +24,7 @@
 
 ;;; Commentary:
 
-;; Manage Altassian Document Format
+;; Manage Altassian Document Format (ADF)
 ;; See https://developer.atlassian.com/cloud/jira/platform/apis/document/
 ;; Not all the kinds of blocks are supported yet, only the most common ones.
 
@@ -104,6 +104,14 @@
       (jira-doc--list-to-str
        (mapcar (lambda (block) (jira-doc--format-block block)) content)
        "\n"))))
+
+(defun jira-doc-build (text)
+  "Build a Jira document (ADF) with a single paragraph of TEXT."
+  `(("type" . "doc")
+    ("version" . 1)
+    ("content" .
+     ((("type" . "paragraph")
+       ("content" . ((("type" . "text") ("text" . ,text)))))))))
 
 (provide 'jira-doc)
 

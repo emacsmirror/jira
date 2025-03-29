@@ -30,10 +30,11 @@
 
 (require 'magit-section)
 
-(require 'jira-fmt)
+(require 'jira-actions)
 (require 'jira-api)
-(require 'jira-table)
 (require 'jira-doc)
+(require 'jira-fmt)
+(require 'jira-table)
 (require 'jira-utils)
 
 ;; they override the default formatters specified
@@ -121,7 +122,7 @@
 (cl-defun jira-detail--issue (key issue)
   "Show the detail information of the ISSUE with KEY."
   (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
-    (magit-section-mode)
+    (jira-detail-mode)
     ;; avoid horizontal scroll
     (setq truncate-lines nil)
     (visual-line-mode 1)
@@ -150,8 +151,15 @@
           (magit-insert-section-body
             (jira-detail--description issue)
 	    (insert "\n\n")))))
+    (jira-detail--show-comments key)
+    (define-key (current-local-map) (kbd "+")
+		(lambda () (interactive) (jira-detail--add-comment key issue)))
     (pop-to-buffer (current-buffer))))
 
+(defun jira-detail--add-comment (key issue)
+  (let ((text (read-string "New comment: "))
+        (callback (lambda () (jira-detail-show-issue key))))
+    (jira-actions-add-comment key text callback)))
 
 (defun jira-detail--comment-author (comment)
   "Show the author of the COMMENT."
@@ -167,20 +175,20 @@
       (goto-char (point-max))
       (magit-insert-section (jira-issue-comments nil nil)
 	(magit-insert-section (comments-list nil nil)
-          (magit-insert-heading "Comments")
+          (magit-insert-heading "Comments (press + to add new)")
           (magit-insert-section-body
 	    (mapcar (lambda (comment)
 		      (magit-insert-section (comment nil nil)
 			(magit-insert-heading (jira-detail--comment-author comment))
 			(magit-insert-section-body
 			  (insert (jira-doc-format (alist-get 'body comment)))
-			  (insert "\n"))))
+			  (insert "\n\n"))))
 		    comments)))))))
 
 (defun jira-detail--show-comments (key)
   "Retrieve and display comments for issue KEY."
   (jira-api-call
-   "GET" (format "issue/%s/comment" key)
+   "GET" (format "issue/%s/comment?orderBy=-created" key)
    :callback
    (lambda (data _response)
      (jira-detail--comments key (alist-get 'comments data)))))
@@ -192,9 +200,17 @@
    :callback
    (lambda (data _response)
      (let* ((issue (json-read-from-string (json-encode data))))
-       (jira-detail--issue key issue)
-       (jira-detail--show-comments key)))))
+       (jira-detail--issue key issue)))))
 
+(defun jira-detail-mode ()
+  "Major mode for displaying Jira issues details."
+  (interactive)
+  (kill-all-local-variables)
+  (let ((map (copy-keymap magit-section-mode-map)))
+    (use-local-map map)
+    (setq major-mode 'jira-detail-mode)
+    (setq mode-name "Jira Detail")
+    (magit-section-mode)))
 
 (provide 'jira-detail)
 
