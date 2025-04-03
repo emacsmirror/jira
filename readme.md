@@ -151,3 +151,5 @@ This is the list of customizations you can set:
 - `jira-statuses-progress`: A list of statuses names representing progress state
 - `jira-statuses-todo`: A list of statuses names representing TODO
 - `jira-statuses-error`: A list of statuses names representing problems
+- `jira-comments-display-recent-first`: The order to display Jira comments in
+  issue detail view.
