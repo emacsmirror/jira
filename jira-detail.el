@@ -205,31 +205,32 @@
   "Display attachments for issue KEY."
   (let* ((fields (alist-get 'fields issue))
          (attachments (alist-get 'attachment fields)))
-    (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
-      (let ((inhibit-read-only t))
-        (goto-char (point-max))
-        (magit-insert-section (jira-issue-attachments nil nil)
-          (magit-insert-heading "Attachments")
-          (magit-insert-section-body
-            (mapcar (lambda (attachment)
-                      (let* ((url (url-generic-parse-url (alist-get 'content attachment)))
-                             ;; FIXME: verify that filename matches
-                             ;; "attachment/content/[0-9]+"
-                             (id (file-name-nondirectory
-                                  (url-filename url)))
-                             (val (list (alist-get 'filename attachment)
-                                        id)))
-                        (magit-insert-section (jira-attachment-section val nil)
-                          (magit-insert-section-body
-                            (insert (format "%-30s %10s %5sB %s\n"
-                                            (alist-get 'filename attachment)
-                                            (alist-get 'mimeType attachment)
-                                            (file-size-human-readable
-                                             (alist-get 'size attachment))
-                                            (jira-fmt-datetime
-                                             (alist-get 'created attachment))))))))
-                      attachments)))
-          (insert "\n")))))
+    (when (> (length attachments) 0)
+      (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+	(let ((inhibit-read-only t))
+          (goto-char (point-max))
+          (magit-insert-section (jira-issue-attachments nil nil)
+	    (magit-insert-section (attachements-list nil nil)
+              (magit-insert-heading "Attachments (press RET to visualize)")
+              (magit-insert-section-body
+		(mapcar
+		 (lambda (attachment)
+		   (let* ((url (url-generic-parse-url (alist-get 'content attachment)))
+                          ;; FIXME: verify that filename matches
+                          ;; "attachment/content/[0-9]+"
+                          (id (file-name-nondirectory (url-filename url)))
+                          (val (list (alist-get 'filename attachment) id)))
+                     (magit-insert-section (jira-attachment-section val nil)
+                       (magit-insert-section-body
+			 (insert (format "%-30s %10s %5sB %s\n"
+					 (alist-get 'filename attachment)
+					 (alist-get 'mimeType attachment)
+					 (file-size-human-readable
+                                          (alist-get 'size attachment))
+					 (jira-fmt-datetime
+                                          (alist-get 'created attachment))))))))
+		 attachments))))
+          (insert "\n"))))))
 
 (defun jira-detail--get-attachment ()
   "Get the attachment in the current section and visit it in a new buffer."
@@ -253,7 +254,7 @@
     (insert data)
     (goto-char (point-min))
     (normal-mode)
-    (set-buffer-modified-p nil)))
+    (set-buffer-modified-p t)))
 
 (defun jira-detail-show-issue (key)
   "Retrieve and show the detail information of the issue with KEY."

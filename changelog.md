@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0 (2024-04-09):
+- Add support for attachments (thank you @danielcmccarthy!)
+
 ## 0.7.0 (2025-03-29):
 - Add comments from jira detail view
 
