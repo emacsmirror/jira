@@ -143,6 +143,8 @@ in a buffer with the result data, defaulting to `json-read'."
   (let* ((username (jira-api--username jira-base-url))
 	 (token (jira-api--token jira-base-url))
 	 (auth (jira-api--auth-header username token)))
+    (if (not auth) (message "[Jira API Error]: Authorization data not found"))
+    (if jira-debug (message "[Jira API Call]: Authorization %s: " auth))
     (request
       (concat (jira-api--url jira-base-url) endpoint)
       :type verb
