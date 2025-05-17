@@ -165,10 +165,52 @@
 		(lambda () (interactive) (jira-detail--add-comment key issue)))
     (pop-to-buffer (current-buffer))))
 
+(defun jira-detail--comment-send ()
+  "Send the current comment buffer content to Jira."
+  (let* ((all-lines (split-string (buffer-string) "\n"))
+         (content (string-join
+                   (seq-drop-while
+                    #'string-empty-p
+                    (seq-filter
+                     (lambda (line)
+                       (not (string= line jira-comment-instruction-line)))
+                     all-lines))
+                   "\n"))
+        (key (buffer-local-value 'jira-comment--issue-key (current-buffer)))
+        (callback (buffer-local-value 'jira-comment--callback (current-buffer))))
+    (kill-buffer)
+    (jira-actions-add-comment key content callback)))
+
+(defun jira-detail--comment-cancel ()
+  "Cancel the current comment and kill the buffer."
+  (kill-buffer))
+
+(defvar jira-comment-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-c")
+      (lambda () (interactive) (jira-detail--comment-send)))
+    (define-key map (kbd "C-c C-k")
+      (lambda () (interactive) (jira-detail--comment-cancel)))
+    map)
+  "Keymap for Jira comment buffers.")
+
+(define-minor-mode jira-comment-mode
+  "Minor mode for editing Jira comments."
+  :lighter " Jira Comment"
+  :interactive nil
+  :keymap jira-comment-mode-map)
+
+
 (defun jira-detail--add-comment (key issue)
-  (let ((text (read-string "New comment: "))
-        (callback (lambda () (jira-detail-show-issue key))))
-    (jira-actions-add-comment key text callback)))
+  (let ((buf (get-buffer-create (format "*Jira Comment: %s*" key))))
+    (with-current-buffer buf
+      (erase-buffer)
+      (setq-local jira-comment--issue-key key)
+      (setq-local jira-comment--callback (lambda () (jira-detail-show-issue key)))
+      (insert jira-comment-instruction-line "\n\n")
+      (jira-comment-mode))
+    (display-buffer buf)
+    (select-window (get-buffer-window buf))))
 
 (defun jira-detail--comment-author (comment)
   "Show the author of the COMMENT."
@@ -178,7 +220,7 @@
    (jira-fmt-datetime (alist-get 'updated comment))))
 
 (defun jira-detail--comments (key comments)
-  "Format and insert COMMENTS from issue KE "
+  "Format and insert COMMENTS from issue KEY "
   (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
     (let ((inhibit-read-only t))
       (goto-char (point-max))
@@ -286,6 +328,10 @@
     (setq major-mode 'jira-detail-mode)
     (setq mode-name "Jira Detail")
     (magit-section-mode)))
+
+(defconst jira-comment-instruction-line
+  ";; Write your comment below - Press C-c C-c to send or C-c C-k to cancel."
+  "The instruction line shown in Jira comment buffers.")
 
 (provide 'jira-detail)
 

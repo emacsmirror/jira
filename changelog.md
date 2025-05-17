@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.8.0 (2024-04-09):
+## 0.10.0 (2025-05-17):
+- Write comments in a new buffer
+
+## 0.9.1 (2025-04-17)
+- Add logging messages to find problems with API auth
+
+## 0.9.0 (2025-04-17)
+- Display times in locale's preferred format
+- Add defcustom to display comments in chronological order
+
+## 0.8.0 (2025-04-09):
 - Add support for attachments (thank you @danielcmccarthy!)
 
 ## 0.7.0 (2025-03-29):
