@@ -30,6 +30,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'jira-fmt)
 
 ;; these blocks contain the content property
@@ -62,7 +63,7 @@
   "Format BLOCK, a date node, as a string."
   (let* ((timestamp (alist-get 'timestamp (alist-get 'attrs block)))
          ;; 32-bit time_t only requires 10 digits but Jira sends 13?
-	 (correct-ts (if (= 13 (length timestamp)) (subseq timestamp 0 10) timestamp))
+	 (correct-ts (if (= 13 (length timestamp)) (cl-subseq timestamp 0 10) timestamp))
          (ts (string-to-number correct-ts))
          (s (format-time-string "%F" ts t)))
     (message "The timestamp is %s" timestamp)

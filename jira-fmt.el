@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(require 'color)
 (require 'shr)
 (require 'jira-utils)
 

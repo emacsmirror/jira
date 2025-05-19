@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0 (2025-05-19)
+- Display more kinds of markup in comments and descriptions: numeric labels for
+  orderedLists, indentation for nested lists, user mentions, emoji, calendar
+  dates, italic, underline, strike-through, inline code, super/subscript,
+  foreground color, adapting to dark backgrounds
+
+
 ## 0.10.0 (2025-05-17):
 - Write comments in a new buffer
 
