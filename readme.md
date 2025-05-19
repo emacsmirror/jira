@@ -153,3 +153,5 @@ This is the list of customizations you can set:
 - `jira-statuses-error`: A list of statuses names representing problems
 - `jira-comments-display-recent-first`: The order to display Jira comments in
   issue detail view.
+- `jira-use-color-marks`: If true, display color marks in Jira text.
+  (default: `t`)

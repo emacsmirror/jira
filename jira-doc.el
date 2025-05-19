@@ -52,20 +52,20 @@
   (mapconcat #'identity items sep))
 
 (defun jira-doc--format-mention (block)
+  "Format BLOCK, a mention node, as a string."
   (let* ((attrs (alist-get 'attrs block))
          (text (alist-get 'text attrs)))
-    ;; Instead of using text, we could look up the user's info based
-    ;; on the 'id attr.
+    ;; Instead of using text, we could look up the user's info based  on the 'id attr.
     (jira-fmt-mention text)))
 
 (defun jira-doc--format-date (block)
   "Format BLOCK, a date node, as a string."
   (let* ((timestamp (alist-get 'timestamp (alist-get 'attrs block)))
          ;; 32-bit time_t only requires 10 digits but Jira sends 13?
-         (ts (string-to-number (if (= 13 (length timestamp))
-                                   (subseq timestamp 0 10)
-                                 timestamp)))
+	 (correct-ts (if (= 13 (length timestamp)) (subseq timestamp 0 10) timestamp))
+         (ts (string-to-number correct-ts))
          (s (format-time-string "%F" ts t)))
+    (message "The timestamp is %s" timestamp)
     (jira-fmt-date s t)))
 
 (defun jira-doc--marks (block)
@@ -112,6 +112,7 @@
 (defvar jira-doc--indent
   0
   "Curent indentation level for list item nodes.")
+
 (defvar jira-doc--list-prefix
   nil
   "A thunk returning a prefix for list item nodes.")
