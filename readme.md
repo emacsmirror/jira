@@ -147,11 +147,13 @@ This is the list of customizations you can set:
    Allowed values are defined in `jira-issues-fields`. Example: `'(:key :issue-type-name :status-name :assignee-name :progress-percent :work-ratio :remaining-time :summary)`
 - `jira-issues-max-results`: Maximum number of Jira issues to retrieve
 - `jira-tempo-max-results`: Maximum number of Tempo worklogs to retrieve
-- `jira-statuses-done`: A list of statuses names representing done state
-- `jira-statuses-progress`: A list of statuses names representing progress state
-- `jira-statuses-todo`: A list of statuses names representing TODO
-- `jira-statuses-error`: A list of statuses names representing problems
 - `jira-comments-display-recent-first`: The order to display Jira comments in
   issue detail view.
 - `jira-use-color-marks`: If true, display color marks in Jira text.
   (default: `t`)
+- `jira-status-faces`: Alist mapping status names to faces to override
+  default styling (faces are automatically assigned to statuses based
+  on the status category: `To Do`, `In Progress` or `Done`). For example:
+  ```elisp
+  '(("Blocked" . '((t (:foreground "white" :background "darkred" :weight bold)))))
+  ```

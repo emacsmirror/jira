@@ -82,9 +82,9 @@ This information is added to worklogs to make it easier to identify")
 (defun jira-issues--data-format-cell (issue field)
   "Format the given FIELD from the given ISSUE."
   (let* ((extracted (jira-table-extract-field jira-issues-fields field issue))
-         (value (format "%s" (or extracted "")))
+         (value (or extracted ""))
          (formatter (jira-table-field-formatter jira-issues-fields field)))
-    (if formatter (funcall formatter value) value)))
+    (if formatter (funcall formatter value) (format "%s" value))))
 
 (defun jira-issues--data-format-issue (issue)
   "Format the given ISSUE."

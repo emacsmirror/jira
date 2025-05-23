@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0 (2025-05-23)
+- **Breaking Change**: `jira-statuses-done`, `jira-statuses-progress`,
+`jira-statuses-todo`, `jira-statuses-error` doesn't work any more.
+
+	- Replaced status lists by status categories to **group statuses** in
+      `Todo`, `In progress` and `Done`, improving the maintainability of the
+      config. Each category have an associated face.
+
+    - Added possibility to custom faces based on status names, allowing to
+      override status categories.
+
 ## 0.11.0 (2025-05-19)
 - Display more kinds of markup in comments and descriptions: numeric labels for
   orderedLists, indentation for nested lists, user mentions, emoji, calendar

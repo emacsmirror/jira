@@ -43,6 +43,14 @@ colors can be controlled by customizing faces in the `jira' group."
                  (const :tag "Do not use color marks" nil))
   :group 'jira)
 
+(defcustom jira-status-faces nil
+  "Alist mapping specific status names (not categories) to faces to override default styling.
+For example:
+  '((\"In Review\" . 'my-custom-review-face)
+    (\"Blocked\" . 'error))"
+  :type '(alist :key-type string :value-type face)
+  :group 'jira)
+
 (defface jira-face-link
   '((t :inherit link)) "Face used to show links." :group 'jira)
 
@@ -98,41 +106,21 @@ colors can be controlled by customizing faces in the `jira' group."
   "Face used for Jira h6 headings."
   :group 'jira)
 
-(defface jira-face-success
+(defface jira-face-status-todo
+  '((t (:foreground "#fff" :background "#AA7777")))
+  "Face used for 'To Do' status category." :group 'jira)
+
+(defface jira-face-status-inprogress
+  '((t (:foreground "#fff" :background "#7777AA")))
+  "Face used for 'In Progress' status category." :group 'jira)
+
+(defface jira-face-status-done
   '((t (:foreground "#fff" :background "#77AA77")))
-  "Face used to show success status." :group 'jira)
-
-(defface jira-face-error
-  '((t (:foreground "#fff" :background "#884444")))
-  "Face used to show error status." :group 'jira)
-
-(defface jira-face-info
-  '((t (:foreground "#fff" :background "#555588")))
-  "Face used to show info status." :group 'jira)
-
-(defface jira-face-tag
-  '((t (:foreground "#fff" :background "#999999")))
-  "Face used to show tags." :group 'jira)
+  "Face used for 'Done' status category." :group 'jira)
 
 (defface jira-face-code
   '((t (:family "Monospace")))
   "Face used to show code blocks." :group 'jira)
-
-(defcustom jira-statuses-done '("Done" "Closed" "Waiting for QA")
-  "A list of statuses names representing done state."
-  :type '(repeat string) :group 'jira)
-
-(defcustom jira-statuses-progress '("In Progress" "Pull-request")
-  "A list of statuses names representing progress state."
-  :type '(repeat string) :group 'jira)
-
-(defcustom jira-statuses-todo '("To do" "Backlog")
-  "A list of statuses names representing TODO."
-  :type '(repeat string) :group 'jira)
-
-(defcustom jira-statuses-error '("Blocked" "Paused")
-  "A list of statuses names representing problems in tasks."
-  :type '(repeat string) :group 'jira)
 
 (defun jira-fmt--link-action (button)
   "Action to open the link in BUTTON."
@@ -175,7 +163,7 @@ COLOR-TODAY is a boolean to color the date if it is today."
 
 (defun jira-fmt-time-from-secs (secs)
   "Format SECS as a string in the form `XhYm`."
-  (let* ((secs-num (string-to-number (or secs 0)))
+  (let* ((secs-num (or secs 0))
          (hours (truncate (/ (float secs-num) 3600)))
          (minutes (truncate (/ (float (% secs-num 3600)) 60))))
     (propertize
@@ -187,26 +175,32 @@ COLOR-TODAY is a boolean to color the date if it is today."
 
 (defun jira-fmt-issue-progress (value)
   "Format progress VALUE as a percentage and adding color."
-  (let ((val (concat (if (or (string-empty-p value) (string= value "-1"))
-                         "0" value)
-                     "%")))
-    (cond ((= (string-to-number val) 100) (propertize val  'face 'jira-face-success))
-          ((> (string-to-number val) 100) (propertize val  'face 'jira-face-error))
+  (let*  ((val (concat (if  (= value -1) "0" (format "%s" value)) "%")))
+    (cond ((= value 100) (propertize val  'face 'jira-face-status-done))
+          ((> value 100) (propertize val  'face 'jira-face-status-todo))
           (t val))))
 
-(defun jira-fmt-issue-status (value)
-  "Format status VALUE adding color."
-  (cond ((member value jira-statuses-done)
-         (propertize (upcase value) 'face 'jira-face-success))
-        ((member value jira-statuses-progress)
-         (propertize (upcase value) 'face 'jira-face-info))
-        ((member value jira-statuses-todo)
-         (propertize (upcase value) 'face 'jira-face-error))
-        ((member value jira-statuses-error)
-         (propertize (upcase value) 'face 'jira-face-error))
-        ((or (string= value "Requirements Backlog"))
-         (propertize (upcase "Backlog") 'face 'jira-face-tag))
-        (t (propertize (upcase value) 'face 'jira-face-tag))))
+(defun jira-fmt--status-category-face (category)
+  (message "Checking status category: %s" category)
+  (cond
+   ((equal category "To Do") 'jira-face-status-todo)
+   ((equal category "In Progress") 'jira-face-status-inprogress)
+   ((equal category "Done") 'jira-face-status-done)
+   (t 'jira-face-status-todo)))
+
+(defun jira-fmt-issue-status (status)
+  "Format STATUS alist adding color based on specific status name.
+Extracts name from the status object."
+  (message "Formatting status: %s" status)
+  (let* ((status-name (or (alist-get 'name status) "Unknown"))
+	 (category (alist-get 'name (alist-get 'statusCategory status))))
+    (propertize (upcase status-name) 'face
+		(or (cdr (assoc-string status-name jira-status-faces))
+		    (jira-fmt--status-category-face category)))))
+
+(defun jira-fmt-issue-status-category (category)
+  "Format STATUS-CATEGORY string adding color based on the value."
+  (propertize category 'face (jira-fmt--status-category-face category)))
 
 (defun jira-fmt-truncate (len str)
   "Truncate STR to LEN characters, removing any line breaks."
@@ -215,34 +209,25 @@ COLOR-TODAY is a boolean to color the date if it is today."
         (concat (substring cleaned-str 0 (- len 3)) "...")
       cleaned-str)))
 
-(defun jira-fmt--list-from-regex (regex value)
-  "Extract a list of values from VALUE using REGEX."
-  (let* ((pos 0) matches)
-  (while (string-match regex value pos)
-    (push (match-string 1 value) matches)
-    (setq pos (match-end 0)))
-  (string-join (reverse matches) ", ")))
-
-;; TODO Ugly, but it works, there were problems parsing the JSON
 (defun jira-fmt-issue-fix-versions (value)
   "Extract a list of fix versions from VALUE."
-  (jira-fmt--list-from-regex "(name\\s-+\\.\\s-+\\([^ )]+\\))" value))
+  (string-join (mapcar (lambda (item) (cdr (assoc 'name item))) value) ", "))
 
 (defun jira-fmt-issue-components (value)
   "Extract a list of components from VALUE."
-  (jira-fmt--list-from-regex "(name\\s-+\\.\\s-+\\([^()]+\\))" value))
+  (string-join (mapcar (lambda (item) (cdr (assoc 'name item))) value) ", "))
 
 (defun jira-fmt-issue-sprints (value)
   "Extract a list of sprints from VALUE."
-  (jira-fmt--list-from-regex "(name\\s-+\\.\\s-+\\([^()]+\\))" value))
+  (string-join (mapcar (lambda (item) (cdr (assoc 'name item))) value) ", "))
 
 (defun jira-fmt-cost-center (value)
   "Extract a list of cost centers from VALUE."
-  (jira-fmt--list-from-regex "(value\\s-+\\.\\s-+\\([^()]+\\))" value))
+  (cdr (assoc 'value value)))
 
 (defun jira-fmt-business-line (value)
   "Extract a list of business lines from VALUE."
-  (jira-fmt--list-from-regex "(value\\s-+\\.\\s-+\\([^()]+\\))" value))
+  (cdr (assoc 'value value)))
 
 (defun jira-fmt-issue-type-name (value)
   "Format issue type VALUE."
