@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.2 (2025-05-26)
+- Fix formatting issues with progress fields
+
 ## 1.0.1 (2025-05-26)
 - Fix formatting issues in `jira-tempo`
 

@@ -176,13 +176,13 @@ COLOR-TODAY is a boolean to color the date if it is today."
 
 (defun jira-fmt-issue-progress (value)
   "Format progress VALUE as a percentage and adding color."
-  (let*  ((val (concat (if  (= value -1) "0" (format "%s" value)) "%")))
+  (let*  ((value (if (stringp value) (string-to-number value) value))
+	  (val (concat (if  (= value -1) "0" (format "%s" value)) "%")))
     (cond ((= value 100) (propertize val  'face 'jira-face-status-done))
           ((> value 100) (propertize val  'face 'jira-face-status-todo))
           (t val))))
 
 (defun jira-fmt--status-category-face (category)
-  (message "Checking status category: %s" category)
   (cond
    ((equal category "To Do") 'jira-face-status-todo)
    ((equal category "In Progress") 'jira-face-status-inprogress)
@@ -192,7 +192,6 @@ COLOR-TODAY is a boolean to color the date if it is today."
 (defun jira-fmt-issue-status (status)
   "Format STATUS alist adding color based on specific status name.
 Extracts name from the status object."
-  (message "Formatting status: %s" status)
   (let* ((status-name (or (alist-get 'name status) "Unknown"))
 	 (category (alist-get 'name (alist-get 'statusCategory status))))
     (propertize (upcase status-name) 'face
