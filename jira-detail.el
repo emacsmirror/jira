@@ -61,11 +61,11 @@
 (defun jira-detail--issue-fmt (issue field)
   "Extract FIELD from ISSUE and format it."
   (let* ((extracted (jira-table-extract-field jira-issues-fields field issue))
-         (value (format "%s" (or extracted "")))
+         (value (or extracted ""))
          (formatter
           (or (cdr (assoc field jira-detail-formatters))
               (jira-table-field-formatter jira-issues-fields field))))
-    (if formatter (funcall formatter value) value)))
+    (if formatter (funcall formatter value) (format "%s" value))))
 
 (defun jira-detail--issue-summary (issue)
   "Show the summary of the ISSUE."

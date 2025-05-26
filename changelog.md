@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.3 (2025-05-26)
+- Fix another formatting issue in detail view
+
 ## 1.0.2 (2025-05-26)
 - Fix formatting issues with progress fields
 
