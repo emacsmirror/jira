@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.1 (2025-05-26)
+- Fix formatting issues in `jira-tempo`
+
 ## 1.0.0 (2025-05-23)
 - **Breaking Change**: `jira-statuses-done`, `jira-statuses-progress`,
 `jira-statuses-todo`, `jira-statuses-error` doesn't work any more.

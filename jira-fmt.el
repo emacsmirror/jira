@@ -163,7 +163,8 @@ COLOR-TODAY is a boolean to color the date if it is today."
 
 (defun jira-fmt-time-from-secs (secs)
   "Format SECS as a string in the form `XhYm`."
-  (let* ((secs-num (or secs 0))
+  (let* ((secs (if (stringp secs) (string-to-number secs) secs))
+	 (secs-num (or secs 0))
          (hours (truncate (/ (float secs-num) 3600)))
          (minutes (truncate (/ (float (% secs-num 3600)) 60))))
     (propertize
