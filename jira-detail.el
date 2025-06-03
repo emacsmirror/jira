@@ -29,6 +29,7 @@
 ;;; Code:
 
 (require 'magit-section)
+(require 'transient)
 
 (require 'jira-actions)
 (require 'jira-api)
@@ -37,6 +38,14 @@
 (require 'jira-table)
 (require 'jira-utils)
 
+(defvar-local jira-detail--current-key nil
+  "The key of the current Jira issue being displayed in the detail view.")
+
+(defvar-local jira-comment--issue-key nil
+  "The key of the Jira issue for which a comment is being added.")
+
+(defvar-local jira-comment--callback nil
+  "The callback function to call after adding a comment.")
 
 (defcustom jira-comments-display-recent-first
   t
@@ -130,7 +139,8 @@
 (cl-defun jira-detail--issue (key issue)
   "Show the detail information of the ISSUE with KEY."
   (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
-    (jira-detail-mode)
+    (jira-detail)
+    (setq jira-detail--current-key key)
     ;; avoid horizontal scroll
     (setq truncate-lines nil)
     (visual-line-mode 1)
@@ -161,8 +171,6 @@
 	    (insert "\n\n")))))
     (jira-detail--show-attachments key issue)
     (jira-detail--show-comments key)
-    (define-key (current-local-map) (kbd "+")
-		(lambda () (interactive) (jira-detail--add-comment key issue)))
     (pop-to-buffer (current-buffer))))
 
 (defun jira-detail--comment-send ()
@@ -176,8 +184,8 @@
                        (not (string= line jira-comment-instruction-line)))
                      all-lines))
                    "\n"))
-        (key (buffer-local-value 'jira-comment--issue-key (current-buffer)))
-        (callback (buffer-local-value 'jira-comment--callback (current-buffer))))
+         (key jira-comment--issue-key)
+	 (callback jira-comment--callback))
     (kill-buffer)
     (jira-actions-add-comment key content callback)))
 
@@ -201,12 +209,12 @@
   :keymap jira-comment-mode-map)
 
 
-(defun jira-detail--add-comment (key issue)
+(defun jira-detail--add-comment (key)
   (let ((buf (get-buffer-create (format "*Jira Comment: %s*" key))))
     (with-current-buffer buf
       (erase-buffer)
-      (setq-local jira-comment--issue-key key)
-      (setq-local jira-comment--callback (lambda () (jira-detail-show-issue key)))
+      (setq jira-comment--issue-key key)
+      (setq jira-comment--callback (lambda () (jira-detail-show-issue key)))
       (insert jira-comment-instruction-line "\n\n")
       (jira-comment-mode))
     (display-buffer buf)
@@ -229,7 +237,7 @@
           (magit-insert-heading "Comments (press + to add new)")
           (magit-insert-section-body
 	    (mapcar (lambda (comment)
-		      (magit-insert-section (comment nil nil)
+		      (magit-insert-section (comment (alist-get 'id comment) nil)
 			(magit-insert-heading (jira-detail--comment-author comment))
 			(magit-insert-section-body
 			  (insert (jira-doc-format (alist-get 'body comment)))
@@ -319,15 +327,44 @@
      (let* ((issue (json-read-from-string (json-encode data))))
        (jira-detail--issue key issue)))))
 
-(defun jira-detail-mode ()
-  "Major mode for displaying Jira issues details."
+
+(transient-define-prefix jira-detail--actions-menu ()
+  "Show menu for actions on Jira Detail."
+  [[:description
+    (lambda ()
+      (format "Actions on  %s" jira-detail--current-key))
+    ("+" "Add comment to issue"
+     (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
+    ("c" "Copy selected issue id to clipboard"
+     (lambda () (interactive)
+       (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
+    ("O" "Open issue in browser"
+     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))]])
+
+(defvar jira-detail-mode-map
+  (let ((map (copy-keymap magit-section-mode-map)))
+    (define-key map (kbd "?") 'jira-detail--actions-menu)
+    (define-key (current-local-map) (kbd "+")
+      (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
+    (define-key map (kbd "c")
+     (lambda () (interactive)
+       (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
+    (define-key map (kbd "O")
+     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
+    map)
+  "Keymap for Jira Issue Detail buffers.")
+
+
+(define-derived-mode jira-detail-mode magit-section-mode "Jira Detail"
+  :interactive nil)
+
+(defun jira-detail ()
+  "Activate `jira-detail-mode' in the current buffer."
   (interactive)
   (kill-all-local-variables)
-  (let ((map (copy-keymap magit-section-mode-map)))
-    (use-local-map map)
-    (setq major-mode 'jira-detail-mode)
-    (setq mode-name "Jira Detail")
-    (magit-section-mode)))
+  (use-local-map (jira-detail--mode-map))
+  (magit-section-mode)
+  (jira-detail-mode))
 
 (defconst jira-comment-instruction-line
   ";; Write your comment below - Press C-c C-c to send or C-c C-k to cancel."
