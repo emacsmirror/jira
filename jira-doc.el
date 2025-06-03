@@ -72,23 +72,23 @@
 (defun jira-doc--marks (block)
   "Return a list of mark attributes from BLOCK."
   (let ((m* '()))
-    (mapc #'(lambda (mark)
-              (let ((type (alist-get 'type mark))
-                    (attrs (alist-get 'attrs mark)))
-                (pcase type
-                  ("link"
-                   (let ((url (alist-get 'href attrs)))
-                     (push `(link . ,url) m*)))
-                  ("subsup"
-                   (let ((subsup (alist-get 'type attrs)))
-                     (push (intern subsup) m*)))
-                  ("textColor"
-                   (let ((c (alist-get 'color attrs)))
-                     (push `(color . ,c) m*)))
-                  ((or "code" "em" "strike" "strong" "underline")
-                   (push (intern type) m*))
-                  (_
-                   (message "[Jira Doc Error]: Ignoring unrecognized text mark %s" mark)))))
+    (mapc (lambda (mark)
+            (let ((type (alist-get 'type mark))
+                  (attrs (alist-get 'attrs mark)))
+              (pcase type
+                ("link"
+                 (let ((url (alist-get 'href attrs)))
+                   (push `(link . ,url) m*)))
+                ("subsup"
+                 (let ((subsup (alist-get 'type attrs)))
+                   (push (intern subsup) m*)))
+                ("textColor"
+                 (let ((c (alist-get 'color attrs)))
+                   (push `(color . ,c) m*)))
+                ((or "code" "em" "strike" "strong" "underline")
+                 (push (intern type) m*))
+                (_
+                 (message "[Jira Doc Error]: Ignoring unrecognized text mark %s" mark)))))
           (alist-get 'marks block))
     m*))
 

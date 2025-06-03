@@ -44,7 +44,8 @@ colors can be controlled by customizing faces in the `jira' group."
   :group 'jira)
 
 (defcustom jira-status-faces nil
-  "Alist mapping specific status names (not categories) to faces to override default styling.
+  "Alist mapping specific status names (not categories) to faces
+to override default styling.
 For example:
   '((\"In Review\" . 'my-custom-review-face)
     (\"Blocked\" . 'error))"
@@ -155,7 +156,7 @@ COLOR-TODAY is a boolean to color the date if it is today."
     date))
 
 (defun jira-fmt-datetime (date)
-  "Format an ISO 8601 date string into a human-readable format."
+  "Format an ISO 8601 DATE string into a human-readable format."
   (let ((parsed-time (date-to-time date)))
     (propertize
      (format-time-string "%c" parsed-time)
@@ -183,6 +184,7 @@ COLOR-TODAY is a boolean to color the date if it is today."
           (t val))))
 
 (defun jira-fmt--status-category-face (category)
+  "Return a face based on the CATEGORY string."
   (cond
    ((equal category "To Do") 'jira-face-status-todo)
    ((equal category "In Progress") 'jira-face-status-inprogress)
@@ -199,7 +201,7 @@ Extracts name from the status object."
 		    (jira-fmt--status-category-face category)))))
 
 (defun jira-fmt-issue-status-category (category)
-  "Format STATUS-CATEGORY string adding color based on the value."
+  "Format CATEGORY string adding color based on the value."
   (propertize category 'face (jira-fmt--status-category-face category)))
 
 (defun jira-fmt-truncate (len str)
@@ -321,7 +323,7 @@ See `jira-doc--marks' for the expected format of MARKS."
                  "\n")))
 
 (defun jira-fmt-heading (text level)
-  "Format TEXT as a heading of importance LEVEL"
+  "Format TEXT as a heading of importance LEVEL."
   (let ((faces [jira-face-h1 jira-face-h2 jira-face-h3
                 jira-face-h4 jira-face-h5 jira-face-h6]))
     (if (<= 1 level (length faces))

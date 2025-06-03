@@ -145,8 +145,8 @@
   (browse-url (format "%s/browse/%s" jira-base-url issue-key)))
 
 (defun jira-actions-add-comment (issue-key text callback)
-  "Create a comment to the issue ISSUE-KEY including the given TEXT and
-running the CALLBACK at the end."
+  "Create a comment to the issue ISSUE-KEY.
+ It will include the given TEXT and run the CALLBACK at the end."
   (jira-api-call
    "POST" (concat "issue/" issue-key "/comment")
    :data `(("body" . ,(jira-doc-build text)))
@@ -155,7 +155,7 @@ running the CALLBACK at the end."
 	       (funcall callback))))
 
 (defun jira-actions-delete-comment (issue-key comment-id callback)
-  "Delete the comment with COMMENT-ID and run CALLBACK when done."
+  "Delete the comment COMMENT-ID from ISSUE-KEY and run CALLBACK when done."
   (jira-api-call
    "DELETE" (concat "issue/" issue-key "/comment/" comment-id)
    :callback (lambda (_data _response)

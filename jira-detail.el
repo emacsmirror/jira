@@ -209,6 +209,7 @@
   :keymap jira-comment-mode-map)
 
 (defun jira-detail--add-comment (key)
+  "Add a comment to the issue with KEY."
   (let ((buf (get-buffer-create (format "*Jira Comment: %s*" key))))
     (with-current-buffer buf
       (erase-buffer)
@@ -227,7 +228,7 @@
    (jira-fmt-datetime (alist-get 'updated comment))))
 
 (defun jira-detail--comments (key comments)
-  "Format and insert COMMENTS from issue KEY "
+  "Format and insert COMMENTS from issue KEY."
   (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
     (let ((inhibit-read-only t))
       (goto-char (point-max))
@@ -263,7 +264,7 @@
   ((keymap :initform 'jira-attachment-section-map)))
 
 (defun jira-detail--show-attachments (key issue)
-  "Display attachments for issue KEY."
+  "Display attachments for ISSUE with key KEY."
   (let* ((fields (alist-get 'fields issue))
          (attachments (alist-get 'attachment fields)))
     (when (> (length attachments) 0)
