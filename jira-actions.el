@@ -154,6 +154,14 @@ running the CALLBACK at the end."
                (message "Comment added to %s" issue-key)
 	       (funcall callback))))
 
+(defun jira-actions-delete-comment (issue-key comment-id callback)
+  "Delete the comment with COMMENT-ID and run CALLBACK when done."
+  (jira-api-call
+   "DELETE" (concat "issue/" issue-key "/comment/" comment-id)
+   :callback (lambda (_data _response)
+               (message "Comment %s deleted" comment-id)
+               (funcall callback))))
+
 (defun jira-actions-copy-issues-id-to-clipboard (issue-key)
   "Copy ISSUE-KEY to the clipboard."
   (when issue-key

@@ -1,4 +1,6 @@
 # Changelog
+## 1.1.0 (2025-06-03)
+- Add keybinding to remove a comment from issue detail view
 
 ## 1.0.3 (2025-05-26)
 - Fix another formatting issue in detail view

@@ -208,7 +208,6 @@
   :interactive nil
   :keymap jira-comment-mode-map)
 
-
 (defun jira-detail--add-comment (key)
   (let ((buf (get-buffer-create (format "*Jira Comment: %s*" key))))
     (with-current-buffer buf
@@ -327,6 +326,20 @@
      (let* ((issue (json-read-from-string (json-encode data))))
        (jira-detail--issue key issue)))))
 
+(defun jira-detail--remove-comment-at-point ()
+  (let ((current-section (magit-current-section)))
+    (if current-section
+	(if (string-equal (caar (magit-section-ident current-section)) "comment")
+	    (let ((comment-id (magit-section-ident-value current-section)))
+	      (when (yes-or-no-p (format "Really delete comment %s?" comment-id))
+                (jira-actions-delete-comment
+		 jira-detail--current-key
+                 comment-id
+		 (lambda () (jira-detail-show-issue jira-detail--current-key))))
+	      )
+	  (message "No comment at point"))
+      (message "No comment at point"))))
+
 
 (transient-define-prefix jira-detail--actions-menu ()
   "Show menu for actions on Jira Detail."
@@ -335,6 +348,8 @@
       (format "Actions on  %s" jira-detail--current-key))
     ("+" "Add comment to issue"
      (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
+    ("-" "Remove comment at point"
+     (lambda () (interactive ) (jira-detail--remove-comment-at-point)))
     ("c" "Copy selected issue id to clipboard"
      (lambda () (interactive)
        (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
@@ -344,8 +359,10 @@
 (defvar jira-detail-mode-map
   (let ((map (copy-keymap magit-section-mode-map)))
     (define-key map (kbd "?") 'jira-detail--actions-menu)
-    (define-key (current-local-map) (kbd "+")
+    (define-key map (kbd "+")
       (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
+    (define-key map (kbd  "-")
+      (lambda () (interactive ) (jira-detail--remove-comment-at-point)))
     (define-key map (kbd "c")
      (lambda () (interactive)
        (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
