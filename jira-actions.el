@@ -145,13 +145,20 @@
   (browse-url (format "%s/browse/%s" jira-base-url issue-key)))
 
 (defun jira-actions-add-comment (issue-key text callback)
-  "Create a comment to the issue with the given ISSUE-KEY."
+  "Create a comment to the issue ISSUE-KEY including the given TEXT and
+running the CALLBACK at the end."
   (jira-api-call
    "POST" (concat "issue/" issue-key "/comment")
    :data `(("body" . ,(jira-doc-build text)))
    :callback (lambda (_data _response)
                (message "Comment added to %s" issue-key)
 	       (funcall callback))))
+
+(defun jira-actions-copy-issues-id-to-clipboard (issue-key)
+  "Copy ISSUE-KEY to the clipboard."
+  (when issue-key
+    (kill-new issue-key)
+    (message "Copied issue ID: %s" issue-key)))
 
 (provide 'jira-actions)
 

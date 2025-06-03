@@ -205,7 +205,8 @@ This information is added to worklogs to make it easier to identify")
     (lambda () (jira-utils-transient-description "Actions on issue"))
     :inapt-if-not jira-utils-marked-item
     ("c" "Copy selected issue id to clipboard"
-     (lambda () (interactive) (jira-issues--copy-issue-id-to-clipboard)))
+     (lambda () (interactive)
+       (jira-actions-copy-issues-id-to-clipboard (jira-utils-marked-item))))
     ("C" "Change issue" jira-actions-change-issue-menu)
     ("I" "Show issue information"
      (lambda () (interactive) (jira-detail-show-issue (jira-utils-marked-item))))
@@ -221,7 +222,7 @@ This information is added to worklogs to make it easier to identify")
 		(lambda () (interactive) (jira-issues--jump-to-tempo)))
     (define-key map (kbd "c")
 		(lambda () (interactive)
-		  (jira-issues--copy-issue-id-to-clipboard)))
+		  (jira-actions-copy-issues-id-to-clipboard (jira-utils-marked-item))))
     (define-key map "C" 'jira-actions-change-issue-menu)
     (define-key map "I" (lambda () (interactive)
                           (jira-detail-show-issue (jira-utils-marked-item))))
@@ -230,13 +231,6 @@ This information is added to worklogs to make it easier to identify")
     (define-key map "W" 'jira-actions-add-worklog-menu)
     map)
   "Keymap for `jira-issues-mode'.")
-
-(defun jira-issues--copy-issue-id-to-clipboard ()
-  "Copy the issue ID of the current row to the clipboard."
-  (let ((issue-key (jira-utils-marked-item)))
-    (when issue-key
-      (kill-new issue-key)
-      (message "Copied issue ID: %s" issue-key))))
 
 ;;;###autoload (autoload 'jira-issues "jira-issues" nil t)
 (defun jira-issues ()

@@ -60,7 +60,7 @@
   :group 'jira :type 'boolean)
 
 (defcustom jira-token-is-personal-access-token nil
-  "Whether the provided token is a Personal Access Token (not an JIRA API Token)"
+  "Whether the provided token is a Personal Access Token (not an JIRA API Token)."
   :group 'jira :type'boolean)
 
 (defvar jira-tempo-url "https://api.tempo.io/4/" "Jira Tempo API URL.")
