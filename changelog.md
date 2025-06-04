@@ -1,4 +1,7 @@
 # Changelog
+## 1.1.1 (2025-06-04)
+- Fix critical bug that wasn't allowing to open Jira Issue Detail view
+
 ## 1.1.0 (2025-06-03)
 - Add keybinding to remove a comment from issue detail view
 - Add help transient in Issue Detail mode, press '?' to open it

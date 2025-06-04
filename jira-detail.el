@@ -380,7 +380,6 @@
   "Activate `jira-detail-mode' in the current buffer."
   (interactive)
   (kill-all-local-variables)
-  (use-local-map (jira-detail--mode-map))
   (magit-section-mode)
   (jira-detail-mode))
 
