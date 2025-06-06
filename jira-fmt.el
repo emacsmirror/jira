@@ -123,6 +123,9 @@ For example:
   '((t (:family "Monospace")))
   "Face used to show code blocks." :group 'jira)
 
+(defun jira-fmt--alist-p (value)
+  (and (listp value) (or (null value) (consp (car value)))))
+
 (defun jira-fmt--link-action (button)
   "Action to open the link in BUTTON."
   (browse-url (button-get button 'href)))
@@ -225,11 +228,11 @@ Extracts name from the status object."
 
 (defun jira-fmt-cost-center (value)
   "Extract a list of cost centers from VALUE."
-  (cdr (assoc 'value value)))
+  (if (jira-fmt--alist-p value) (cdr (assoc 'value value)) ""))
 
 (defun jira-fmt-business-line (value)
   "Extract a list of business lines from VALUE."
-  (cdr (assoc 'value value)))
+  (if (jira-fmt--alist-p value) (cdr (assoc 'value value)) ""))
 
 (defun jira-fmt-issue-type-name (value)
   "Format issue type VALUE."

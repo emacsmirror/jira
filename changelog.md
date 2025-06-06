@@ -1,4 +1,7 @@
 # Changelog
+## 1.1.2 (2025-06-06)
+- Fix critical bug with formatting of issue fields that can't be empty
+
 ## 1.1.1 (2025-06-04)
 - Fix critical bug that wasn't allowing to open Jira Issue Detail view
 
