@@ -1,4 +1,7 @@
 # Changelog
+## 1.1.3 (2025-06-08)
+- Fix another critical bug with formatting of issue fields that can't be empty
+
 ## 1.1.2 (2025-06-06)
 - Fix critical bug with formatting of issue fields that can't be empty
 
