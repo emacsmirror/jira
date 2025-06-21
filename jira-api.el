@@ -255,8 +255,11 @@ CALLBACK is the function to call after the request is done."
          "GET" "resolution"
          :callback
          (lambda (data _response)
-           (let* ((resolutions (json-read-from-string (json-encode data))))
-             (setq jira-resolutions (mapcar fmt resolutions)))
+           (let* ((resolutions (mapcar fmt (json-read-from-string (json-encode data)))))
+	     ;; Jira UI represents with the "Unresolved" key the
+	     ;; resolutions for fields that don't have a resolution set.
+	     ;; If we find this value, we will send a nil
+             (setq jira-resolutions (cons (cons "Unresolved" nil) resolutions)))
            (when callback (funcall callback)))))
     (when callback (funcall callback))))
 

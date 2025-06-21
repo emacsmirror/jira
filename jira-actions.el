@@ -114,7 +114,9 @@
        :data `(("fields" .
                 ,(let (fields)
                    (when resolution
-                     (push `( "resolution" . (("name" . ,resolution))) fields))
+		     (if (string-equal resolution "Unresolved")
+			 (push `( "resolution" . nil) fields)
+		       (push `( "resolution" . (("name" . ,resolution))) fields)))
                    (when time-estimate
                      (push `( "timetracking" . (("originalEstimate" . ,time-estimate))) fields))
                    fields)))

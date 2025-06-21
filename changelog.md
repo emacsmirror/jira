@@ -1,4 +1,9 @@
 # Changelog
+## 1.1.4 (2025-06-21)
+- Provide an `Unresolved` resolution value for issues.  Jira UI represents with
+  the "Unresolved" key the resolutions for fields that don't have a resolution
+  set.
+
 ## 1.1.3 (2025-06-08)
 - Fix another critical bug with formatting of issue fields that can't be empty
 

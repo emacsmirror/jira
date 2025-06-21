@@ -310,7 +310,7 @@ Extracts name from the status object."
 See `jira-doc--marks' for the expected format of MARKS."
   (if (and (stringp text) (not (string-empty-p text)))
       (let ((clean-text (substring-no-properties text)))
-	(if-let ((url (alist-get 'link marks)))
+	(if-let* ((url (alist-get 'link marks)))
             (buttonize clean-text (lambda (_button) (browse-url url)) nil url)
 	  (if (memq 'code marks)
               (jira-fmt-code clean-text)
