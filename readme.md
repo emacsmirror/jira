@@ -155,5 +155,9 @@ This is the list of customizations you can set:
   default styling (faces are automatically assigned to statuses based
   on the status category: `To Do`, `In Progress` or `Done`). For example:
   ```elisp
-  '(("Blocked" . '((t (:foreground "white" :background "darkred" :weight bold)))))
+  (defface jira-face-pr
+  '((t (:foreground "white" :background "orange" :weight bold)))
+  "Face for pull-request status."
+  :group 'jira)
+  (setq jira-status-faces '(("Pull-request" . jira-face-pr)))
   ```
