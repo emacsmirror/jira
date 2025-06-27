@@ -1,4 +1,7 @@
 # Changelog
+## 1.1.5 (2025-06-27)
+- Press `g` in Jira Detail mode to refresh the issue
+
 ## 1.1.4 (2025-06-21)
 - Provide an `Unresolved` resolution value for issues.  Jira UI represents with
   the "Unresolved" key the resolutions for fields that don't have a resolution

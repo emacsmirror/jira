@@ -354,6 +354,9 @@
     ("c" "Copy selected issue id to clipboard"
      (lambda () (interactive)
        (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
+    ("g" "Refresh issue detail"
+     (lambda () (interactive)
+       (jira-detail-show-issue jira-detail--current-key)))
     ("O" "Open issue in browser"
      (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))]])
 
@@ -367,10 +370,8 @@
     (define-key map (kbd "c")
      (lambda () (interactive)
        (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
-    (define-key map (kbd "g")
-     (lambda ()
-       "Refresh the current issue detail buffer."
-       (interactive)
+    (define-key map (kbd "g") ;; refresh buffer
+     (lambda () (interactive)
        (jira-detail-show-issue jira-detail--current-key)))
     (define-key map (kbd "O")
      (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
