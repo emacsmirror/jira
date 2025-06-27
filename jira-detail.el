@@ -367,6 +367,11 @@
     (define-key map (kbd "c")
      (lambda () (interactive)
        (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
+    (define-key map (kbd "g")
+     (lambda ()
+       "Refresh the current issue detail buffer."
+       (interactive)
+       (jira-detail-show-issue jira-detail--current-key)))
     (define-key map (kbd "O")
      (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
     map)
