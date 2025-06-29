@@ -190,12 +190,14 @@
        "\n"))))
 
 (defun jira-doc-build (text)
-  "Build a Jira document (ADF) with a single paragraph of TEXT."
-  `(("type" . "doc")
-    ("version" . 1)
-    ("content" .
-     ((("type" . "paragraph")
-       ("content" . ((("type" . "text") ("text" . ,text)))))))))
+  "Build a simple Jira document (ADF) from TEXT."
+  (let* ((lines (split-string (or text "") "\n" t)))
+    `(("type" . "doc") ("version" . 1)
+      ("content" .
+       ,(mapcar (lambda (line)
+                  `(("type" . "paragraph")
+                    ("content" . ((("type" . "text") ("text" . ,line))))))
+                lines)))))
 
 (provide 'jira-doc)
 

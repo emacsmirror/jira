@@ -110,8 +110,7 @@ This information is added to worklogs to make it easier to identify")
 
 (defun jira-issues--refresh-table (data _response)
   "Refresh the table with the given RESPONSE DATA."
-  (let* ((data-alist (json-read-from-string (json-encode data)))
-         (issues (alist-get 'issues data-alist)))
+  (let* ((issues (alist-get 'issues data)))
     (setq tabulated-list-entries (mapcar #'jira-issues--data-format-issue issues))
     (setq jira-issues-key-summary-map (jira-issues-store-issues-info issues))
     (tabulated-list-print t)))

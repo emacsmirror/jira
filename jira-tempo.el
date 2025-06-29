@@ -114,8 +114,7 @@ CALLBACK is a function that will be called with the worklogs data."
 
 (defun jira-tempo--refresh-table (data _response)
   "Refresh the table with RESPONSE DATA."
-  (let* ((data-alist (json-read-from-string (json-encode data)))
-         (worklogs (alist-get 'results data-alist))
+  (let* ((worklogs (alist-get 'results data))
          (entries (jira-tempo--data-format-worklogs worklogs)))
     (setq tabulated-list-entries entries)
     (tabulated-list-print t t)))

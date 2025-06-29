@@ -1,4 +1,5 @@
 # jira.el
+---
 
 Emacs integration for [Atlassian's Jira](https://www.atlassian.com/software/jira).
 
@@ -11,6 +12,21 @@ modifying certain properties, and adding worklogs.
 
 Additionally, it provides support for displaying all worklogs from the
 [Tempo](https://www.tempo.io/products/jira-time-tracking) integration.
+
+## 🎉 Version 2.0.0 Release! 🎉
+
+We're excited to announce a major update to `jira.el`, bringing significant enhancements
+to the Jira Detail view and overall usability:
+
+- **Enhanced Issue Management from Detail View:**
+  - Press `?` to reveal a comprehensive menu of all available actions and keybindings.
+  - Update various issue fields effortlessly using `U`. Enjoy **intelligent suggestions**
+    for many fields, pulled directly from the Jira API, making updates faster and more
+    accurate.
+  - Seamlessly change issue statuses with a quick press of `C`.
+
+Upgrade today for a more powerful and efficient Jira experience within Emacs!
+
 
 ## Screenshots
 

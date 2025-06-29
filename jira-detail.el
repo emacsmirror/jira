@@ -37,15 +37,51 @@
 (require 'jira-fmt)
 (require 'jira-table)
 (require 'jira-utils)
+(require 'jira-complete)
+
+(defvar-local jira-detail--current nil
+  "All data from current issue being displayed in the detail view.")
 
 (defvar-local jira-detail--current-key nil
-  "The key of the current Jira issue being displayed in the detail view.")
+  "The key of the current issue being displayed in the detail view.")
+
+(defvar-local jira-detail--current-update-metadata nil
+  "Metadata needed to updates fields from the current issue.")
 
 (defvar-local jira-comment--issue-key nil
   "The key of the Jira issue for which a comment is being added.")
 
 (defvar-local jira-comment--callback nil
   "The callback function to call after adding a comment.")
+
+(defconst jira-detail--updatable-fields
+  (list (cons "Parent Issue" "parent")
+        (cons "Description" "description")
+	(cons "Issue Type" "issuetype")
+	(cons "Resolution" "resolution")
+	(cons "Project" "project")
+	(cons "Fix Versions" "fixVersions")
+	(cons "Summary" "summary")
+	(cons "Components" "components")
+	(cons "Priority" "priority")
+	(cons "Labels" "labels")
+	(cons "Assignee" "assignee")
+	(cons "Reporter" "reporter")
+	(cons "Due Date" "duedate")
+	(cons "Original Estimate" "originalEstimate")
+	(cons "Remaining Estimate" "remainingEstimate")
+	(cons "Sprint" (cons :custom "Sprint"))
+	(cons "Business Line" (cons :custom "Business line"))
+	(cons "Cost Center" (cons :custom "Cost center")))
+  "List of fields that can be updated in the Jira detail view.")
+
+(defconst jira-comment-instruction-line
+  ";; Write your comment below - Press C-c C-c to send or C-c C-k to cancel."
+  "The instruction line shown in Jira comment buffers.")
+
+(defconst jira-description-instruction-line
+  ";; Write the description below - Press C-c C-c to save or C-c C-k to cancel."
+  "The instruction line shown in Jira description editor buffers.")
 
 (defcustom jira-comments-display-recent-first
   t
@@ -137,10 +173,14 @@
     (insert  (jira-doc-format doc))))
 
 (cl-defun jira-detail--issue (key issue)
-  "Show the detail information of the ISSUE with KEY."
+  "Show the detailed information of the ISSUE with KEY."
   (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
     (jira-detail)
     (setq jira-detail--current-key key)
+    (setq jira-detail--current issue)
+    ;; prepare the information about how to update each field
+    ;; so that it is ready if user asks for it
+    (jira-detail--ensure-update-metadata)
     ;; avoid horizontal scroll
     (setq truncate-lines nil)
     (visual-line-mode 1)
@@ -173,52 +213,49 @@
     (jira-detail--show-comments key)
     (pop-to-buffer (current-buffer))))
 
-(defun jira-detail--comment-send ()
-  "Send the current comment buffer content to Jira."
-  (let* ((all-lines (split-string (buffer-string) "\n"))
-         (content (string-join
-                   (seq-drop-while
-                    #'string-empty-p
-                    (seq-filter
-                     (lambda (line)
-                       (not (string= line jira-comment-instruction-line)))
-                     all-lines))
-                   "\n"))
-         (key jira-comment--issue-key)
-	 (callback jira-comment--callback))
-    (kill-buffer)
-    (jira-actions-add-comment key content callback)))
 
-(defun jira-detail--comment-cancel ()
-  "Cancel the current comment and kill the buffer."
-  (kill-buffer))
-
-(defvar jira-comment-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c")
-      (lambda () (interactive) (jira-detail--comment-send)))
-    (define-key map (kbd "C-c C-k")
-      (lambda () (interactive) (jira-detail--comment-cancel)))
-    map)
-  "Keymap for Jira comment buffers.")
-
-(define-minor-mode jira-comment-mode
-  "Minor mode for editing Jira comments."
-  :lighter " Jira Comment"
-  :interactive nil
-  :keymap jira-comment-mode-map)
+(defun jira-detail--create-editor-buffer
+    (buffer-name initial-content instructions save-callback)
+  "Create and display an editor buffer with INITIAL-CONTENT and a SAVE-CALLBACK."
+  (let ((buf (get-buffer-create buffer-name)))
+    (with-current-buffer buf
+      (erase-buffer)
+      (insert instructions "\n\n")
+      (insert initial-content)
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "C-c C-c")
+          (lambda () (interactive)
+            (let ((content (buffer-string)))
+              (kill-buffer buf)
+              (funcall save-callback
+		       (string-trim (string-remove-prefix instructions content))))))
+        (define-key map (kbd "C-c C-k")
+          (lambda () (interactive) (kill-buffer buf)))
+        (set-buffer-modified-p nil)
+        (use-local-map map))
+      (display-buffer buf)
+      (select-window (get-buffer-window buf)))))
 
 (defun jira-detail--add-comment (key)
   "Add a comment to the issue with KEY."
-  (let ((buf (get-buffer-create (format "*Jira Comment: %s*" key))))
-    (with-current-buffer buf
-      (erase-buffer)
-      (setq jira-comment--issue-key key)
-      (setq jira-comment--callback (lambda () (jira-detail-show-issue key)))
-      (insert jira-comment-instruction-line "\n\n")
-      (jira-comment-mode))
-    (display-buffer buf)
-    (select-window (get-buffer-window buf))))
+  (jira-detail--create-editor-buffer
+   (format "*Jira Comment: %s*" key)
+   "" jira-comment-instruction-line
+   (lambda (content)
+     (jira-actions-add-comment
+      key content
+      (lambda () (jira-detail-show-issue key))))))
+
+(defun jira-detail--edit-description-and-update ()
+  "Open a buffer to edit the description and update the issue."
+  (let ((key jira-detail--current-key))
+    (jira-detail--create-editor-buffer
+     (concat "*Jira Description [" key "]*")
+     ""
+     jira-description-instruction-line
+     (lambda (new-description)
+       (jira-detail--update-field-action
+	"description" (jira-doc-build new-description) key)))))
 
 (defun jira-detail--comment-author (comment)
   "Show the author of the COMMENT."
@@ -322,10 +359,7 @@
   "Retrieve and show the detail information of the issue with KEY."
   (jira-api-call
    "GET" (concat "issue/" key)
-   :callback
-   (lambda (data _response)
-     (let* ((issue (json-read-from-string (json-encode data))))
-       (jira-detail--issue key issue)))))
+   :callback (lambda (data _) (jira-detail--issue key data))))
 
 (defun jira-detail--remove-comment-at-point ()
   (let ((current-section (magit-current-section)))
@@ -341,24 +375,88 @@
 	  (message "No comment at point"))
       (message "No comment at point"))))
 
+(defun jira-detail--update-field-action (field-id value key)
+  ;; Update FIELD-ID with VALUE for the current issue.
+  (jira-api-call
+   "PUT" (concat "issue/" key)
+   :data `(("fields" . ((,field-id . ,value))))
+   :callback (lambda (_data _response) (jira-detail-show-issue key))))
+
+(defun jira-detail--update-timetracking-action (field-id value key)
+  ;; Update timetracking FIELD-ID with VALUE for the current issue.
+  (jira-api-call
+   "PUT" (concat "issue/" key)
+   :data `(("fields" . (("timetracking" . ((,field-id . ,value))))))
+   :callback (lambda (_data _response) (jira-detail-show-issue key))))
+
+(defun jira-detail--ensure-update-metadata ()
+  ;; Ensure jira-detail--current-update-metadata is populated and return it.
+  (unless jira-detail--current-update-metadata
+    (setq jira-detail--current-update-metadata
+          (jira-api-get-create-metadata
+           (jira-table-extract-field jira-issues-fields :project-key jira-detail--current)
+           (jira-table-extract-field jira-issues-fields :issue-type-id jira-detail--current)
+           :sync t)))
+  jira-detail--current-update-metadata)
+
+(defun jira-detail--updatable-field-id (field-name)
+  (let ((id (cdr (assoc field-name jira-detail--updatable-fields))))
+    (if (and (consp id) (eq (car id) :custom))
+        (cdr (assoc (cdr id) jira-fields))
+      id)))
+
+(defun jira-detail--change-issue-status ()
+  ;; Change the status of the current issue.
+  (let ((jira-utils-marked-item jira-detail--current-key))
+    (jira-actions-change-issue-menu)))
+
+(defun jira-detail--update-field ()
+  "Update a field for the current issue."
+  (let* ((field-alist jira-detail--updatable-fields)
+         (field-names (mapcar #'car field-alist))
+         (chosen-field-name (completing-read "Field to update: " field-names nil t)))
+    (when chosen-field-name
+      (jira-detail--ensure-update-metadata)
+      (cond ((string= chosen-field-name "Description")
+             (jira-detail--edit-description-and-update))
+            ((or (string= chosen-field-name "Original Estimate")
+		 (string= chosen-field-name "Remaining Estimate"))
+             (let* ((field-id (jira-detail--updatable-field-id chosen-field-name))
+                    (value (read-string (format "Enter value for %s: " chosen-field-name))))
+               (jira-detail--update-timetracking-action field-id value jira-detail--current-key)))
+            (t (let* ((field-id (jira-detail--updatable-field-id chosen-field-name))
+                      (fields (alist-get 'fields jira-detail--current-update-metadata))
+                      (field-metadata
+                       (car (seq-filter (lambda (f) (string= (alist-get 'fieldId f) field-id))
+                                        fields))))
+                 (if field-metadata
+                     (let ((value (jira-complete-ask-field field-metadata)))
+                       (jira-detail--update-field-action field-id value jira-detail--current-key))
+                   (message "Could not find metadata for field %s" field-id))))))))
 
 (transient-define-prefix jira-detail--actions-menu ()
   "Show menu for actions on Jira Detail."
-  [[:description
-    (lambda ()
-      (format "Actions on  %s" jira-detail--current-key))
-    ("+" "Add comment to issue"
-     (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
-    ("-" "Remove comment at point"
-     (lambda () (interactive ) (jira-detail--remove-comment-at-point)))
-    ("c" "Copy selected issue id to clipboard"
-     (lambda () (interactive)
-       (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
-    ("g" "Refresh issue detail"
-     (lambda () (interactive)
-       (jira-detail-show-issue jira-detail--current-key)))
-    ("O" "Open issue in browser"
-     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))]])
+  ["Comments"
+   ("+" "Add comment to issue"
+    (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
+   ("-" "Remove comment at point"
+    (lambda () (interactive ) (jira-detail--remove-comment-at-point)))]
+  ["Issue Actions"
+   ("C" "Change issue status"
+    (lambda () (interactive) (jira-detail--change-issue-status)))
+   ("U" "Update issue field"
+    (lambda () (interactive) (jira-detail--update-field)))
+   ("c" "Copy selected issue id to clipboard"
+    (lambda () (interactive)
+      (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
+   ("g" "Refresh issue detail"
+    (lambda () (interactive)
+      (jira-detail-show-issue jira-detail--current-key)))
+   ("O" "Open issue in browser"
+    (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))])
+
+(defvar jira-detail-changed-hook nil
+  "Hook run after a Jira issue has been changed in jira-detail-mode.")
 
 (defvar jira-detail-mode-map
   (let ((map (copy-keymap magit-section-mode-map)))
@@ -366,21 +464,32 @@
     (define-key map (kbd "+")
       (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
     (define-key map (kbd  "-")
-      (lambda () (interactive ) (jira-detail--remove-comment-at-point)))
+     (lambda () "Remove comment at point"
+       (interactive) (jira-detail--remove-comment-at-point)))
+    (define-key map (kbd "C")
+      (lambda () "Change issue status"
+	(interactive) (jira-detail--change-issue-status)))
+    (define-key map (kbd "U")
+      (lambda () "Update issue field"
+	(interactive) (jira-detail--update-field)))
     (define-key map (kbd "c")
-     (lambda () (interactive)
-       (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
-    (define-key map (kbd "g") ;; refresh buffer
-     (lambda () (interactive)
-       (jira-detail-show-issue jira-detail--current-key)))
+      (lambda () "Copy selected issue id to clipboard"
+	(interactive)
+	(jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
+    (define-key map (kbd "g")
+      (lambda () "Refresh issue detail"
+	(interactive) (jira-detail-show-issue jira-detail--current-key)))
     (define-key map (kbd "O")
-     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
+      (lambda () "Open issue in browser"
+	(interactive)  (jira-actions-open-issue jira-detail--current-key)))
     map)
   "Keymap for Jira Issue Detail buffers.")
 
 
 (define-derived-mode jira-detail-mode magit-section-mode "Jira Detail"
-  :interactive nil)
+  :interactive nil
+  (add-hook 'jira-detail-changed-hook
+            (lambda () (jira-detail-show-issue jira-detail--current-key)) nil t))
 
 (defun jira-detail ()
   "Activate `jira-detail-mode' in the current buffer."
@@ -388,10 +497,6 @@
   (kill-all-local-variables)
   (magit-section-mode)
   (jira-detail-mode))
-
-(defconst jira-comment-instruction-line
-  ";; Write your comment below - Press C-c C-c to send or C-c C-k to cancel."
-  "The instruction line shown in Jira comment buffers.")
 
 (provide 'jira-detail)
 

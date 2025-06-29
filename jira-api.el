@@ -105,17 +105,17 @@
   "Generate the Authorization header for Jira Tempo API requests with TOKEN."
   (format "Bearer %s" token))
 
-(defun jira-api--url (base-url)
-  "Generate the full URL from BASE-URL for Jira API requests."
-  (let ((version (if (numberp jira-api-version)
-		     (number-to-string jira-api-version)
-		   jira-api-version)))
-    (concat base-url "/rest/api/" version "/")))
+(defun jira-api--url (base-url endpoint)
+  "Generate the full API url from BASE-URL and the given ENDPOINT"
+  (let* ((version (if (numberp jira-api-version)
+		      (number-to-string jira-api-version)
+		    jira-api-version))
+	 (api-url (concat base-url "/rest/api/" version "/")))
+    (if (string-prefix-p base-url endpoint) endpoint (concat api-url endpoint))))
 
 (defun jira-api--callback-success-log (data _response)
   "Log the RESPONSE DATA of a successful Jira API request."
-  (message "[Jira API Response]: %s" (json-encode data)))
-
+  (message "[Jira API Response]: %s" data))
 
 (defun jira-api--callback-error-log (response error-thrown)
   "Log the RESPONSE data and ERROR-THROWN of a failed Jira API request."
@@ -130,35 +130,39 @@
     (message "[Jira API Response Headers]: %s" (or response-headers "No headers"))
     (message "[Jira API Response Body]: %s" (or response-data "No response body"))))
 
-
-(cl-defun jira-api-call (verb endpoint &key params data callback parser)
+(cl-defun jira-api-call (verb endpoint &key params data callback parser sync)
   "Perform a VERB request to the Jira API ENDPOINT.
 
 PARAMS is a list of cons cells, DATA is the request body, and CALLBACK
 is the function to call if successful. PARSER is a function to call
-in a buffer with the result data, defaulting to `json-read'."
+in a buffer with the result data, defaulting to `json-read'.
+
+Sync is a boolean indicating whether the request should be
+synchronous or not. If SYNC is non-nil, the request will block
+until it completes, otherwise it will be asynchronous."
   (message "[Jira API Call]: %s %s" verb endpoint)
   (when (and jira-debug data)
     (message "[Jira API Call Data]: %s" (json-encode data)))
   (let* ((username (jira-api--username jira-base-url))
 	 (token (jira-api--token jira-base-url))
-	 (auth (jira-api--auth-header username token)))
+	 (auth (jira-api--auth-header username token))
+	 (callback (cl-function
+		    (lambda (&key data response &allow-other-keys)
+		      (when jira-debug
+			(jira-api--callback-success-log data response))
+		      (when callback
+			(funcall callback data response))))))
     (if (not auth) (message "[Jira API Error]: Authorization data not found"))
     (if jira-debug (message "[Jira API Call]: Authorization %s: " auth))
     (request
-      (concat (jira-api--url jira-base-url) endpoint)
+      (jira-api--url jira-base-url endpoint)
       :type verb
-      :headers `(("Authorization" . ,auth)
-                 ("Content-Type" . "application/json"))
+      :headers `(("Authorization" . ,auth) ("Content-Type" . "application/json"))
+      :sync sync
       :params (or params '())
       :data (if data (json-encode data) nil)
       :parser (or parser 'json-read)
-      :success (cl-function
-                (lambda (&key data response &allow-other-keys)
-		  (when jira-debug
-                    (jira-api--callback-success-log data response))
-		  (when callback
-		    (funcall callback data response))))
+      :success callback
       :error (cl-function
               (lambda (&key response error-thrown &allow-other-keys)
                 (jira-api--callback-error-log response error-thrown))))))
@@ -220,8 +224,7 @@ CALLBACK is the function to call after the request is done."
                              (alist-get 'id tr))))
          (extract
           (lambda (data _response)
-            (let* ((data-alist (json-read-from-string (json-encode data)))
-                   (transitions (alist-get 'transitions data-alist)))
+            (let* ((transitions (alist-get 'transitions data)))
               (mapcar format-transition transitions)))))
     (jira-api-call "GET" (format "issue/%s/transitions" issue-key)
                    :callback (lambda (data response)
@@ -239,8 +242,7 @@ CALLBACK is the function to call after the request is done."
          "GET" "status"
          :callback
          (lambda (data _response)
-           (let* ((statuses (json-read-from-string (json-encode data))))
-             (setq jira-statuses (mapcar fmt statuses)))
+           (setq jira-statuses (mapcar fmt data))
            (when callback (funcall callback)))))
     (when callback (funcall callback))))
 
@@ -255,7 +257,7 @@ CALLBACK is the function to call after the request is done."
          "GET" "resolution"
          :callback
          (lambda (data _response)
-           (let* ((resolutions (mapcar fmt (json-read-from-string (json-encode data)))))
+           (let* ((resolutions (mapcar fmt data)))
 	     ;; Jira UI represents with the "Unresolved" key the
 	     ;; resolutions for fields that don't have a resolution set.
 	     ;; If we find this value, we will send a nil
@@ -274,10 +276,9 @@ CALLBACK is the function to call after the request is done."
          "GET" "project"
          :params `(("recent" . ,10))
          :callback
-         (lambda (data _response)
-           (let* ((projects (json-read-from-string (json-encode data))))
-             (setq jira-projects (mapcar fmt projects))
-             (jira-api-get-versions :force t :callback callback)))))
+         (lambda (data _)
+           (setq jira-projects (mapcar fmt data))
+           (jira-api-get-versions :force t :callback callback))))
     (when callback (funcall callback))))
 
 (cl-defun jira-api-get-versions (&key force callback)
@@ -294,13 +295,22 @@ CALLBACK is the function to call after the request is done."
            :params `(("orderBy" . "-sequence")
                      ("maxResults" . 50))
            :callback
-           (lambda (data _response)
-             (let* ((data-alist (json-read-from-string (json-encode data)))
-                    (versions (mapcar fmt (alist-get  'values data-alist))))
+           (lambda (data _)
+             (let* ((versions (mapcar fmt (alist-get  'values data))))
                (setq jira-projects-versions
                      (cons (cons (car project) versions) jira-projects-versions)))
              (when callback (funcall callback))))))
     (when callback (funcall callback))))
+
+(cl-defun jira-api-get-create-metadata (project-key issue-type-id &key callback sync)
+  "Get the metadata for creating an issue in PROJECT-KEY with ISSUE-TYPE-ID.
+
+CALLBACK is the function to call after the request is done."
+  (let* ((url (format "issue/createmeta/%s/issuetypes/%s"
+		      project-key issue-type-id))
+         (response (jira-api-call "GET" url :params `(("maxResults" . 100)) :callback callback :sync sync)))
+    (when sync
+      (request-response-data response))))
 
 (cl-defun jira-api-get-basic-data (&key force)
   "Get some basic data (custom fields, projects, statuses, etc) from JIRA API.

@@ -1,4 +1,13 @@
 # Changelog
+## 2.0.0 (2025-06-29)
+- **Major Version Update**
+- **Enhanced Issue Management from Detail View:**
+  - Seamlessly change issue statuses with a quick press of `C`.
+  - Update various issue fields effortlessly using `U`. Enjoy intelligent
+    suggestions for many fields, pulled directly from the Jira API, making
+	updates faster and more accurate.
+  - Press `?` to reveal a comprehensive menu of all available actions and keybindings.
+
 ## 1.1.5 (2025-06-27)
 - Press `g` in Jira Detail mode to refresh the issue
 

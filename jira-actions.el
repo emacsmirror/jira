@@ -102,7 +102,11 @@
          (resolution (transient-arg-value "--resolution=" args))
          (status-id (cdr (assoc status jira-active-issue-transitions)))
          (time-estimate (transient-arg-value "--time-estimate=" args))
-         (hook (lambda (_data _response) (run-hooks 'jira-issues-changed-hook))))
+         (hook (lambda (_data _response)
+                 (cond ((eq major-mode 'jira-issues-mode)
+                        (run-hooks 'jira-issues-changed-hook))
+                       ((eq major-mode 'jira-detail-mode)
+                        (run-hooks 'jira-detail-changed-hook))))))
     (when status-id
       (jira-api-call
        "POST" (concat "issue/" (jira-utils-marked-item) "/transitions")

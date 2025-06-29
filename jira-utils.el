@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(defvar jira-detail--current-key)
+
 (require 'tablist)
 
 (defvar jira-issues-fields
@@ -88,6 +90,9 @@
                          (:columns . 15)
                          (:name . "Type")
                          (:formatter . jira-fmt-issue-type-name)))
+    (:issue-type-id . ((:path . (fields issuetype id))
+                         (:columns . 15)
+                         (:name . "Type")))
     (:issue-type-icon . ((:path . (fields issuetype iconUrl))
                          (:columns .  10)
                          (:name . "Type")))
@@ -142,8 +147,10 @@
                     (:name . "Resolution")))))
 
 (defun jira-utils-marked-item ()
-  "Return the marked item in the current tablist."
-  (car (car (tablist-get-marked-items))))
+  "Return the marked item in the current tablist or the current issue key
+if we are in the Jira Detail buffer"
+  (or (car (car (tablist-get-marked-items)))
+      jira-detail--current-key))
 
 (defun jira-utils-transient-description (prefix &optional item)
   "Return a transient description for the given ITEM (or the marked one)
