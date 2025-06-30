@@ -167,6 +167,8 @@ This is the list of customizations you can set:
   issue detail view.
 - `jira-use-color-marks`: If true, display color marks in Jira text.
   (default: `t`)
+- `jira-detail-show-announcements`: Whether to show announcements in Jira
+   detail view. Useful to know new features of `jira.el`. (default: `t`)
 - `jira-status-faces`: Alist mapping status names to faces to override
   default styling (faces are automatically assigned to statuses based
   on the status category: `To Do`, `In Progress` or `Done`). For example:

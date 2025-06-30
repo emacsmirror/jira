@@ -1,4 +1,8 @@
 # Changelog
+## 2.0.3 (2025-06-30)
+- Add `jira-detail-show-announcements` custom variable to control announcements in detail view.
+- Add announcement in Jira detail view about new update field feature.
+
 ## 2.0.2 (2025-06-30)
 - Fix: Labels can now be updated correctly, handling the API's expectation of a list of strings.
 ## 2.0.1 (2025-06-30)

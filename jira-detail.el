@@ -172,6 +172,11 @@
   (let* ((doc (alist-get 'description (alist-get 'fields issue))))
     (insert  (jira-doc-format doc))))
 
+(defcustom jira-detail-show-announcements t
+  "Whether to show announcements in Jira detail view."
+  :type 'boolean
+  :group 'jira)
+
 (cl-defun jira-detail--issue (key issue)
   "Show the detailed information of the ISSUE with KEY."
   (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
@@ -203,12 +208,19 @@
           (magit-insert-heading "Manager Data")
           (magit-insert-section-body
             (jira-detail--issue-manager-data issue)
-            (insert "\n")))
+            (insert "\n")
+            (when jira-detail-show-announcements
+              (insert "----------------------------------------------------------------\n")
+              (insert (propertize "jira.el v2.0" 'face 'jira-face-h1) " allows you to ")
+              (insert "update fields with smart suggestions!\n")
+              (insert "Press " (propertize "?" 'face 'jira-face-date) " to open transient menu, ")
+              (insert "and " (propertize "U" 'face 'jira-face-date) " to update a field.")
+              (insert "\n----------------------------------------------------------------\n\n"))))
         (magit-insert-section (description nil nil)
           (magit-insert-heading "Description")
           (magit-insert-section-body
             (jira-detail--description issue)
-	    (insert "\n\n")))))
+            (insert "\n\n")))))
     (jira-detail--show-attachments key issue)
     (jira-detail--show-comments key)
     (pop-to-buffer (current-buffer))))
