@@ -1,4 +1,6 @@
 # Changelog
+## 2.0.2 (2025-06-30)
+- Fix: Labels can now be updated correctly, handling the API's expectation of a list of strings.
 ## 2.0.1 (2025-06-30)
 - Fix bug while updating the status of an issue. The original estimation was updated
   instead of the remaining time

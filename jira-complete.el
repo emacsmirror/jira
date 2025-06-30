@@ -87,7 +87,10 @@
         (let ((selected
 	       (completing-read-multiple
                 (format "Select values for %s: " field-name) choices nil t)))
-          (mapcar (lambda (s) `((id . ,(cdr (assoc s choices))))) selected))
+          (if (string-equal field-name "Labels")
+              selected
+	    ;; labels just expects a list of strings, not objects
+            (mapcar (lambda (s) `((id . ,(cdr (assoc s choices))))) selected)))
       (let ((selected
 	     (completing-read
 	      (format "Select a value for %s: " field-name) choices nil t)))
