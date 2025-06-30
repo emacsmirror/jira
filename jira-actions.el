@@ -101,7 +101,7 @@
          (status (transient-arg-value "--status=" args))
          (resolution (transient-arg-value "--resolution=" args))
          (status-id (cdr (assoc status jira-active-issue-transitions)))
-         (time-estimate (transient-arg-value "--time-estimate=" args))
+         (time-estimate (transient-arg-value "--remaining-time-estimate=" args))
          (hook (lambda (_data _response)
                  (cond ((eq major-mode 'jira-issues-mode)
                         (run-hooks 'jira-issues-changed-hook))
@@ -122,7 +122,7 @@
 			 (push `( "resolution" . nil) fields)
 		       (push `( "resolution" . (("name" . ,resolution))) fields)))
                    (when time-estimate
-                     (push `( "timetracking" . (("originalEstimate" . ,time-estimate))) fields))
+                     (push `( "timetracking" . (("remainingEstimate" . ,time-estimate))) fields))
                    fields)))
        :callback hook))))
 
@@ -135,7 +135,7 @@
    ("r" "Resolution" "--resolution="
     :choices
     (lambda () (mapcar (lambda (res) (car res)) jira-resolutions)))
-   ("e" "Time Estimate" "--time-estimate=")]
+   ("e" "Time Estimate" "--remaining-time-estimate=")]
   ["Actions"
    ("c" "Change" (lambda () (interactive) (jira-actions--change-issue)))]
 

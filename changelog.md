@@ -1,4 +1,7 @@
 # Changelog
+## 2.0.1 (2025-06-30)
+- Fix bug while updating the status of an issue. The original estimation was updated
+  instead of the remaining time
 ## 2.0.0 (2025-06-29)
 - **Major Version Update**
 - **Enhanced Issue Management from Detail View:**
