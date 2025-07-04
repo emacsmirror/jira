@@ -1,4 +1,7 @@
 # Changelog
+## 2.9.0 (2025-09-15)
+- Add syntax highlighting for jira-edit-mode. Thanks @danielcmccarthy!
+
 ## 2.8.2 (2025-09-06)
 - Restore compatibility of `jira.el` with older JIRA API versions where the `search/jql`
   endpoint does not exist.
