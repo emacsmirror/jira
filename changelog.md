@@ -1,4 +1,7 @@
 # Changelog
+## 2.0.4 (2025-07-04)
+- Find an issue by key or URL from the issues list view by pressing 'f'.
+
 ## 2.0.3 (2025-06-30)
 - Add `jira-detail-show-announcements` custom variable to control announcements in detail view.
 - Add announcement in Jira detail view about new update field feature.
