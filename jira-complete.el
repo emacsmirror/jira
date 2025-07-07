@@ -48,9 +48,23 @@
   (let* ((path (url-filename (url-generic-parse-url url))))
     (car (last (split-string path "/")))))
 
+(defun jira-complete--find-key-at-point ()
+  "Find a Jira issue key at or around the current point."
+  (let ((key-regex  "\\b[A-Z0-9]+-[0-9]+\\b"))
+    (when (thing-at-point-looking-at key-regex)
+      (match-string 0))))
+
+(defun jira-complete--get-default-issue-key-input ()
+  "Get the default input for issue key completion, from URL or key at point."
+  (let* ((url-at-point (thing-at-point 'url))
+         (key-from-url (and url-at-point (jira-complete--extract-key-from-url url-at-point)))
+         (key-at-point (jira-complete--find-key-at-point)))
+    (cond (key-from-url key-from-url) (key-at-point key-at-point) (t ""))))
+
 (defun jira-complete-ask-issue ()
   "Read an issue key or URL from the user and return its key."
-  (let* ((input (read-string "Find issue (key or URL): "))
+  (let* ((default-input (jira-complete--get-default-issue-key-input))
+         (input (read-string (format "Find issue (key or URL): %s" default-input) nil nil default-input))
          (key (or (jira-complete--extract-key-from-url input) input)))
     (if (jira-complete--validate-key key)
 	key (message "Invalid Jira issue key or URL: %s" input))))
