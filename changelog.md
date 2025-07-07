@@ -1,4 +1,8 @@
 # Changelog
+## 2.0.5 (2025-07-07)
+- Add `P` keybinding to jump to the detail view of the parent issue.
+- Add "Show parent issue" to the transient menu.
+
 ## 2.0.4 (2025-07-04)
 - Find an issue by key or URL from the issues list view by pressing 'f'.
 

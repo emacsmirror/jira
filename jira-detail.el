@@ -461,6 +461,9 @@
   ["Issue Actions"
    ("C" "Change issue status"
     (lambda () (interactive) (jira-detail--change-issue-status)))
+   ("O" "Open issue in browser"
+    (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
+   ("P" "Show parent issue" (lambda () (interactive) (jira-detail--show-parent-issue)))
    ("U" "Update issue field"
     (lambda () (interactive) (jira-detail--update-field)))
    ("f" "Find issue by key/url"
@@ -469,10 +472,7 @@
     (lambda () (interactive)
       (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
    ("g" "Refresh issue detail"
-    (lambda () (interactive)
-      (jira-detail-show-issue jira-detail--current-key)))
-   ("O" "Open issue in browser"
-    (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))])
+    (lambda () (interactive) (jira-detail-show-issue jira-detail--current-key)))])
 
 (defvar jira-detail-changed-hook nil
   "Hook run after a Jira issue has been changed in jira-detail-mode.")
@@ -504,8 +504,19 @@
     (define-key map (kbd "g")
       (lambda () "Refresh issue detail"
 	(interactive) (jira-detail-show-issue jira-detail--current-key)))
+    (define-key map (kbd "P")
+      (lambda () "Show parent issue"
+	(interactive) (jira-detail--show-parent-issue)))
     map)
   "Keymap for Jira Issue Detail buffers.")
+
+(defun jira-detail--show-parent-issue ()
+  "Show the detail view of the parent issue."
+  (interactive)
+  (let ((parent-key (jira-detail--issue-fmt jira-detail--current :parent-key)))
+    (if (and parent-key (not (string= parent-key "")))
+        (jira-detail-show-issue parent-key)
+      (message "No parent issue for the current issue."))))
 
 
 (define-derived-mode jira-detail-mode magit-section-mode "Jira Detail"
