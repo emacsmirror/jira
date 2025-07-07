@@ -446,6 +446,11 @@
                        (jira-detail--update-field-action field-id value jira-detail--current-key))
                    (message "Could not find metadata for field %s" field-id))))))))
 
+(defun jira-detail-find-issue-by-key ()
+  "Find and show a Jira issue by key."
+  (let ((key (jira-complete-ask-issue)))
+    (when key (jira-detail-show-issue key))))
+
 (transient-define-prefix jira-detail--actions-menu ()
   "Show menu for actions on Jira Detail."
   ["Comments"
@@ -458,6 +463,8 @@
     (lambda () (interactive) (jira-detail--change-issue-status)))
    ("U" "Update issue field"
     (lambda () (interactive) (jira-detail--update-field)))
+   ("f" "Find issue by key/url"
+    (lambda () (interactive) (jira-detail-find-issue-by-key)))
    ("c" "Copy selected issue id to clipboard"
     (lambda () (interactive)
       (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
@@ -481,9 +488,15 @@
     (define-key map (kbd "C")
       (lambda () "Change issue status"
 	(interactive) (jira-detail--change-issue-status)))
+    (define-key map (kbd "O")
+      (lambda () "Open issue in browser"
+	(interactive)  (jira-actions-open-issue jira-detail--current-key)))
     (define-key map (kbd "U")
       (lambda () "Update issue field"
 	(interactive) (jira-detail--update-field)))
+    (define-key map (kbd "f")
+      (lambda () "Find issue by key"
+        (interactive) (jira-detail-find-issue-by-key)))
     (define-key map (kbd "c")
       (lambda () "Copy selected issue id to clipboard"
 	(interactive)
@@ -491,9 +504,6 @@
     (define-key map (kbd "g")
       (lambda () "Refresh issue detail"
 	(interactive) (jira-detail-show-issue jira-detail--current-key)))
-    (define-key map (kbd "O")
-      (lambda () "Open issue in browser"
-	(interactive)  (jira-actions-open-issue jira-detail--current-key)))
     map)
   "Keymap for Jira Issue Detail buffers.")
 

@@ -39,6 +39,22 @@
   '("attachment", "timetracking")
   "Schemas that are not allowed in the fields metadata.")
 
+(defun jira-complete--validate-key (key)
+  "Validate a Jira issue KEY format."
+  (and key (string-match-p "^[A-Z0-9]+-[0-9]+$" key)))
+
+(defun jira-complete--extract-key-from-url (url)
+  "Extract Jira issue key from a URL."
+  (let* ((path (url-filename (url-generic-parse-url url))))
+    (car (last (split-string path "/")))))
+
+(defun jira-complete-ask-issue ()
+  "Read an issue key or URL from the user and return its key."
+  (let* ((input (read-string "Find issue (key or URL): "))
+         (key (or (jira-complete--extract-key-from-url input) input)))
+    (if (jira-complete--validate-key key)
+	key (message "Invalid Jira issue key or URL: %s" input))))
+
 (defun jira-complete--is-allowed (field)
   ;; check if the field is allowed to be used in the issue creation
   (let ((schema (alist-get 'schema field)))

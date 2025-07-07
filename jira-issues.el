@@ -192,33 +192,16 @@ This information is added to worklogs to make it easier to identify")
   (kill-buffer (buffer-name))
   (jira-tempo))
 
-(defun jira-issues--extract-key-from-url (url)
-  "Extract Jira issue key from a URL."
-  (let* ((path (url-filename (url-generic-parse-url url))))
-    (car (last (split-string path "/")))))
-
-(defun jira-issues--validate-key (key)
-  "Validate a Jira issue KEY format."
-  (and key (string-match-p "^[A-Z0-9]+-[0-9]+$" key)))
-
-(defun jira-issues-find-issue ()
-  "Read an issue key or URL from the user and show its details."
-  (interactive)
-  (let* ((input (read-string "Find issue (key or URL): "))
-         (key (or (jira-issues--extract-key-from-url input) input)))
-    (if (jira-issues--validate-key key)
-        (jira-detail-show-issue key)
-      (message "Invalid Jira issue key or URL: %s" input))))
-
 (transient-define-prefix jira-issues-actions-menu ()
   "Show menu for actions on Jira Issues."
   [[:description "Jira Issues List"
                 ("?" "Show this menu" jira-issues-actions-menu)
                 ("g" "Refresh list" tablist-revert)
                 ("l" "List Jira Issues menu" jira-issues-menu)
+		("f" "Find issue by key/url"
+		 (lambda () (interactive) (jira-detail-find-issue-by-key)))
 		("T" "Jump to Tempo worklogs"
-		 (lambda () (interactive) (jira-issues--jump-to-tempo)))
-		("f" "Find issue by key/url" jira-issues-find-issue)]]
+		 (lambda () (interactive) (jira-issues--jump-to-tempo)))]]
   [[:description
     (lambda () (jira-utils-transient-description "Actions on issue"))
     :inapt-if-not jira-utils-marked-item
@@ -236,8 +219,8 @@ This information is added to worklogs to make it easier to identify")
   (let ((map (make-sparse-keymap)))
     (define-key map "?" 'jira-issues-actions-menu)
     (define-key map "l" 'jira-issues-menu)
-    (define-key map "T"
-		(lambda () (interactive) (jira-issues--jump-to-tempo)))
+    (define-key map "T" (lambda () (interactive) (jira-issues--jump-to-tempo)))
+    (define-key map "f" (lambda () (interactive) (jira-detail-find-issue-by-key)))
     (define-key map (kbd "c")
 		(lambda () (interactive)
 		  (jira-actions-copy-issues-id-to-clipboard (jira-utils-marked-item))))
@@ -247,7 +230,6 @@ This information is added to worklogs to make it easier to identify")
     (define-key map "O" (lambda () (interactive)
                           (jira-actions-open-issue (jira-utils-marked-item))))
     (define-key map "W" 'jira-actions-add-worklog-menu)
-    (define-key map "f" 'jira-issues-find-issue)
     map)
   "Keymap for `jira-issues-mode'.")
 
