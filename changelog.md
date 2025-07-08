@@ -1,4 +1,8 @@
 # Changelog
+## 2.1.0 (2025-07-08)
+- Add new section for subtasks in the detail view.
+- Prepend appropriate emojis to headings in the detail view.
+
 ## 2.0.5 (2025-07-07)
 - Add `P` keybinding to jump to the detail view of the parent issue.
 - Add "Show parent issue" to the transient menu.

@@ -29,6 +29,7 @@
 ;;; Code:
 
 (require 'magit-section)
+(require 'seq)
 (require 'transient)
 
 (require 'jira-actions)
@@ -38,6 +39,7 @@
 (require 'jira-table)
 (require 'jira-utils)
 (require 'jira-complete)
+
 
 (defvar-local jira-detail--current nil
   "All data from current issue being displayed in the detail view.")
@@ -193,19 +195,19 @@
       (erase-buffer)
       ;; section: Jira Issue Summary
       (magit-insert-section (jira-issue-summary nil nil)
-        (magit-insert-heading "Jira Issue Summary")
+        (magit-insert-heading "📝 Jira Issue Summary")
         (magit-insert-section-body (jira-detail--issue-summary issue)))
       (insert "\n")
       ;; section: Information
       (magit-insert-section (jira-issue-information nil nil)
         ;; section: Team Data
         (magit-insert-section (team-data nil nil)
-          (magit-insert-heading "Team Data")
+          (magit-insert-heading "👥 Team Data")
           (magit-insert-section-body (jira-detail--issue-team issue))
           (insert "\n"))
         ;; section: Manager Data
         (magit-insert-section (manager-data nil nil)
-          (magit-insert-heading "Manager Data")
+          (magit-insert-heading "📊 Manager Data")
           (magit-insert-section-body
             (jira-detail--issue-manager-data issue)
             (insert "\n")
@@ -217,11 +219,12 @@
               (insert "and " (propertize "U" 'face 'jira-face-date) " to update a field.")
               (insert "\n----------------------------------------------------------------\n\n"))))
         (magit-insert-section (description nil nil)
-          (magit-insert-heading "Description")
+          (magit-insert-heading "📄 Description")
           (magit-insert-section-body
             (jira-detail--description issue)
             (insert "\n\n")))))
     (jira-detail--show-attachments key issue)
+    (jira-detail--show-subtasks key issue)
     (jira-detail--show-comments key)
     (pop-to-buffer (current-buffer))))
 
@@ -283,7 +286,7 @@
       (goto-char (point-max))
       (magit-insert-section (jira-issue-comments nil nil)
 	(magit-insert-section (comments-list nil nil)
-          (magit-insert-heading "Comments (press + to add new)")
+          (magit-insert-heading "💬 Comments (press + to add new)")
           (magit-insert-section-body
 	    (mapcar (lambda (comment)
 		      (magit-insert-section (comment (alist-get 'id comment) nil)
@@ -305,7 +308,33 @@
    (lambda (data _response)
      (jira-detail--comments key (alist-get 'comments data)))))
 
-(defvar-keymap jira-attachment-section-map
+(defun jira-detail--show-subtasks (key issue)
+  "Display subtasks for ISSUE with key KEY."
+  (let* ((fields (alist-get 'fields issue))
+         (subtasks (alist-get 'subtasks fields)))
+    (when (and subtasks (sequencep subtasks) (> (length subtasks) 0))
+      (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+        (let ((inhibit-read-only t))
+          (goto-char (point-max))
+          (magit-insert-section (jira-issue-subtasks nil nil)
+	    (magit-insert-section (subtasks-list nil nil)
+              (magit-insert-heading "🔗 Subtasks")
+              (magit-insert-section-body
+		(seq-doseq (subtask subtasks)
+                  (let* ((subtask-key (alist-get 'key subtask))
+			 (subtask-fields (alist-get 'fields subtask))
+			 (subtask-summary (alist-get 'summary subtask-fields))
+			 (subtask-status
+			  (alist-get 'name (alist-get 'status subtask-fields))))
+                    (when (and (stringp subtask-key)
+			       (stringp subtask-summary) (stringp subtask-status))
+                      (insert (format "  - %s  %s\n   (%s)\n\n"
+				      (jira-fmt-issue-key-not-tabulated subtask-key)
+                                      subtask-summary
+                                      subtask-status))))))
+          (insert "\n"))))))))
+
+(defvar-keymap jira-attachmennt-section-map
   :doc "Keymap for Jira attachment sections."
   "<RET>" #'jira-detail--get-attachment)
 
@@ -322,7 +351,7 @@
           (goto-char (point-max))
           (magit-insert-section (jira-issue-attachments nil nil)
 	    (magit-insert-section (attachements-list nil nil)
-              (magit-insert-heading "Attachments (press RET to visualize)")
+              (magit-insert-heading "📎 Attachments (press RET to visualize)")
               (magit-insert-section-body
 		(mapcar
 		 (lambda (attachment)
@@ -339,9 +368,9 @@
 					 (file-size-human-readable
                                           (alist-get 'size attachment))
 					 (jira-fmt-datetime
-                                          (alist-get 'created attachment))))))))
-		 attachments))))
-          (insert "\n"))))))
+                                          (alist-get 'created attachment))))
+			 (insert "\n")))))
+		 attachments)))))))))
 
 (defun jira-detail--get-attachment ()
   "Get the attachment in the current section and visit it in a new buffer."
