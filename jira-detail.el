@@ -324,17 +324,15 @@
                   (let* ((subtask-key (alist-get 'key subtask))
 			 (subtask-fields (alist-get 'fields subtask))
 			 (subtask-summary (alist-get 'summary subtask-fields))
-			 (subtask-status
-			  (alist-get 'name (alist-get 'status subtask-fields))))
-                    (when (and (stringp subtask-key)
-			       (stringp subtask-summary) (stringp subtask-status))
-                      (insert (format "  - %s  %s\n   (%s)\n\n"
+			 (subtask-status (alist-get 'status subtask-fields)))
+                    (when (and (stringp subtask-key) (stringp subtask-summary))
+                      (insert (format " - %s  %s\n   %s\n"
 				      (jira-fmt-issue-key-not-tabulated subtask-key)
                                       subtask-summary
-                                      subtask-status))))))
+                                      (jira-fmt-issue-status subtask-status)))))))
           (insert "\n"))))))))
 
-(defvar-keymap jira-attachmennt-section-map
+(defvar-keymap jira-attachment-section-map
   :doc "Keymap for Jira attachment sections."
   "<RET>" #'jira-detail--get-attachment)
 
@@ -362,15 +360,15 @@
                           (val (list (alist-get 'filename attachment) id)))
                      (magit-insert-section (jira-attachment-section val nil)
                        (magit-insert-section-body
-			 (insert (format "%-30s %10s %5sB %s\n"
+			 (insert (format " - %-30s %10s %5sB %s\n"
 					 (alist-get 'filename attachment)
 					 (alist-get 'mimeType attachment)
 					 (file-size-human-readable
                                           (alist-get 'size attachment))
 					 (jira-fmt-datetime
-                                          (alist-get 'created attachment))))
-			 (insert "\n")))))
-		 attachments)))))))))
+                                          (alist-get 'created attachment))))))))
+		 attachments)
+		(insert "\n")))))))))
 
 (defun jira-detail--get-attachment ()
   "Get the attachment in the current section and visit it in a new buffer."
