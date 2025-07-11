@@ -1,12 +1,8 @@
-;;; jira.el --- Emacs Interface to Jira  -*- lexical-binding: t -*-
+;;; jira-users.el --- Jira user database             -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025 Pablo González Carrizo
+;; Copyright (C) 2025  Dan McCarthy
 
-;; Author: Pablo González Carrizo <unmonoqueteclea@gmail.com>
-;; Version: 2.5.0
-;; Created: 2025-02-16
-;; URL: https://github.com/unmonoqueteclea/jira.el
-;; Package-Requires: ((emacs "29.1") (request "0.3.0") (tablist "1.0") (transient "0.8.3") (magit-section "4.2.0"))
+;; Author: Dan McCarthy <daniel.c.mccarthy@gmail.com>
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -27,15 +23,22 @@
 
 ;;; Commentary:
 
-;; This package allows you to visualuze and manipulate Jira issues from Emacs.
-
 ;;; Code:
 
-(require 'jira-issues)
-(require 'jira-tempo)
+(require 'jira-api)
 
-(defconst jira-version "jira.el v2.5.0" "jira.el package version.")
+;; jira-users hash table is retrieved within jira-api
 
-(provide 'jira)
+(defun jira-users-read-user (prompt &optional watchers)
+  "Complete a Jira username with PROMPT.
 
-;;; jira.el ends here
+Returns a list: (NAME ACCOUNT-ID). WATCHERS is an optional list of
+display names to complete from; the default is all names in
+`jira-users'."
+  (let* ((name (completing-read prompt (or watchers jira-users)))
+         (account-id (gethash name jira-users)))
+    (list name account-id)))
+
+(provide 'jira-users)
+
+;;; jira-users.el ends here

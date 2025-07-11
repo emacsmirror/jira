@@ -50,6 +50,9 @@
 (defvar-local jira-detail--current-update-metadata nil
   "Metadata needed to updates fields from the current issue.")
 
+(defvar-local jira-detail--current-watchers nil
+  "Watchers of the current issue being displayed.")
+
 (defvar-local jira-comment--issue-key nil
   "The key of the Jira issue for which a comment is being added.")
 
@@ -157,8 +160,10 @@
         (sprint (jira-detail--issue-fmt issue :sprints))
         (components (jira-detail--issue-fmt issue :components)))
     (insert (jira-detail--header "Business Line") line "\n")
-    (insert (jira-detail--header "Parent")
-            parent-key " (" parent-type ") (" parent-status ")\n")
+    (insert (jira-detail--header "Parent"))
+    (when (and (not (string= parent-status "")) (not (string= parent-type "")))
+      (insert parent-key " (" parent-type ") (" parent-status ")"))
+    (insert "\n")
     (insert (jira-detail--header "Sprint") sprint "\n")
     (insert (jira-detail--header "Components") components "\n")))
 
@@ -233,7 +238,7 @@
             (insert "\n\n")))))
     (jira-detail--show-attachments key issue)
     (jira-detail--show-subtasks key issue)
-    (jira-detail--show-comments key)
+    (jira-detail--show-other key)
     (pop-to-buffer (current-buffer))))
 
 
@@ -334,11 +339,11 @@
 			 (subtask-summary (alist-get 'summary subtask-fields))
 			 (subtask-status (alist-get 'status subtask-fields)))
                     (when (and (stringp subtask-key) (stringp subtask-summary))
-                      (insert (format " - %s  %s\n   %s\n"
+                      (insert (format " - %s  %s %s\n"
 				      (jira-fmt-issue-key-not-tabulated subtask-key)
-                                      subtask-summary
-                                      (jira-fmt-issue-status subtask-status)))))))
-          (insert "\n"))))))))
+				      (jira-fmt-issue-status subtask-status)
+                                      subtask-summary))))))
+              (insert "\n"))))))))
 
 (defvar-keymap jira-attachment-section-map
   :doc "Keymap for Jira attachment sections."
@@ -401,6 +406,33 @@
     (goto-char (point-min))
     (normal-mode)
     (set-buffer-modified-p t)))
+
+(defun jira-detail--show-other (key)
+  (jira-detail--watchers
+   key
+   (lambda (data _response)
+     (jira-detail--show-comments key)
+     (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+       (let ((inhibit-read-only t)
+             (names (mapcar (lambda (u)
+                              (alist-get 'displayName u))
+                            (alist-get 'watchers data))))
+         (setq jira-detail--current-watchers names)
+         (goto-char (point-max))
+	 ;; section: Other
+	 (magit-insert-section (jira-issue-other nil nil)
+           (magit-insert-section (other nil nil)
+             (magit-insert-heading "➕ Other")
+             (magit-insert-section-body
+               (insert (jira-detail--header "Watchers")
+                       (string-join names ", ")
+                       "\n\n")))))))))
+
+(defun jira-detail--watchers (key callback)
+  "Show the watchers list of issue with KEY."
+  (jira-api-call "GET"
+                 (format "issue/%s/watchers" key)
+                 :callback callback))
 
 (defun jira-detail-show-issue (key)
   "Retrieve and show the detail information of the issue with KEY."
@@ -493,6 +525,21 @@
   (let ((key (jira-complete-ask-issue)))
     (when key (jira-detail-show-issue key))))
 
+(transient-define-prefix jira-detail--watchers-menu ()
+  "Transient menu for adding or removing watchers to an issue."
+  ["Watchers"
+   ("+" "Add watcher"
+    (lambda () (interactive)
+      (jira-actions-add-watcher jira-detail--current-key
+                                (lambda ()
+                                  (jira-detail-show-issue jira-detail--current-key)))))
+   ("-" "Remove watcher"
+    (lambda () (interactive)
+      (jira-actions-remove-watcher jira-detail--current-key
+                                   jira-detail--current-watchers
+                                   (lambda ()
+                                     (jira-detail-show-issue jira-detail--current-key)))))])
+
 (transient-define-prefix jira-detail--actions-menu ()
   "Show menu for actions on Jira Detail."
   ["Comments"
@@ -509,6 +556,7 @@
    ("S" "Add subtask" (lambda () (interactive) (jira-detail--create-subtask)))
    ("U" "Update issue field"
     (lambda () (interactive) (jira-detail--update-field)))
+   ("w" "Update watchers" jira-detail--watchers-menu)
    ("f" "Find issue by key/url"
     (lambda () (interactive) (jira-detail-find-issue-by-key)))
    ("c" "Copy selected issue id to clipboard"
@@ -535,8 +583,9 @@
 		(lambda () "Open issue in browser"
 		  (interactive)  (jira-actions-open-issue jira-detail--current-key)))
     (define-key map (kbd "U")
-		(lambda () "Update issue field"
-		  (interactive) (jira-detail--update-field)))
+      (lambda () "Update issue field"
+	(interactive) (jira-detail--update-field)))
+    (define-key map (kbd "w") 'jira-detail--watchers-menu)
     (define-key map (kbd "f")
 		(lambda () "Find issue by key"
 		  (interactive) (jira-detail-find-issue-by-key)))

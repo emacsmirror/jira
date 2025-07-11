@@ -1,4 +1,6 @@
 # Changelog
+## 2.5.0 (2025-07-21)
+- Add ability to add/remove watchers on an issue
 
 ## 2.4.0 (2025-07-19)
 - Add support for favorite JQL filters.

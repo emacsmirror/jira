@@ -160,6 +160,7 @@ This is the list of customizations you can set:
    - ⚠️ Some Jira instances only allow REST API version 2
 - `jira-tempo-token`: Jira [tempo.io](https://www.tempo.io/) API token
 - `jira-debug`: Whether to log jira.el internal processes data, including API responses
+- `jira-users-max-results`:  Maximum number of Jira usernames to retrieve (default: `1000`)
 - `jira-issues-table-fields`: Fields to show in the issues table.
    Allowed values are defined in `jira-issues-fields`. Example: `'(:key :issue-type-name :status-name :assignee-name :progress-percent :work-ratio :remaining-time :summary)`
 - `jira-issues-max-results`: Maximum number of Jira issues to retrieve

@@ -63,6 +63,15 @@
   "Whether the provided token is a Personal Access Token (not an JIRA API Token)."
   :group 'jira :type'boolean)
 
+(defcustom jira-users-max-results
+  1000
+  "Maximum number of Jira usernames to retrieve."
+  :group 'jira :type 'integer)
+
+(defvar jira-users
+  nil
+  "Hash table of all Jira users, (displayName property) and ids (accountID)")
+
 (defvar jira-tempo-url "https://api.tempo.io/4/" "Jira Tempo API URL.")
 (defvar jira-account-id nil "Jira account ID of the current user.")
 (defvar jira-fields nil "Jira custom fields available for the current user.")
@@ -317,6 +326,32 @@ CALLBACK is the function to call after the request is done."
              (when callback (funcall callback))))))
     (when callback (funcall callback))))
 
+(cl-defun jira-api-get-users (&key force)
+  "Fetch the list of all Jira user names and IDs and store it in `jira-users'.
+
+If FORCE is non-nil, re-fetches the user list.
+"
+  (interactive)
+  (when (or (not jira-users)
+            force)
+    (let ((table (make-hash-table :test #'equal)))
+      ;; Theses params are undocumented but work:
+      ;; https://stackoverflow.com/a/64786638
+      (jira-api-call "GET"
+                     "users/search"
+                     :params
+                     `((query . "+")
+                       (maxResults . ,jira-users-max-results))
+                     :callback
+                     (lambda (data _response)
+                       (mapc #'(lambda (u)
+                                 (let ((id (alist-get 'accountId u))
+                                       (name (alist-get 'displayName u)))
+                                   (unless (eq :json-false (alist-get 'active u))
+                                     (setf (gethash name table) id))))
+                             data)))
+      (setq jira-users table))))
+
 (cl-defun jira-api-get-create-metadata (project-key issue-type-id &key callback sync)
   "Get the metadata for creating an issue in PROJECT-KEY with ISSUE-TYPE-ID.
 
@@ -339,7 +374,8 @@ and making the request synchronous if SYNC."
 
 FORCE will force the request even if the data is already stored."
   ;; one call after the other, to avoid request burst
-  (let* ((fds (lambda () (jira-api-get-fields :force force)))
+  (let* ((users (lambda () (jira-api-get-users :force force)))
+         (fds (lambda () (jira-api-get-fields :force force :callback users)))
          (st (lambda () (jira-api-get-statuses :force force :callback fds)))
          (res (lambda () (jira-api-get-resolutions :force force :callback st)))
          (flt (lambda () (jira-api-get-filters :force force :callback res)))
