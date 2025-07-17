@@ -98,6 +98,14 @@
   '((:key . jira-fmt-issue-key-not-tabulated)
     (:parent-key . jira-fmt-issue-key-not-tabulated)))
 
+(defun jira-detail--project-key ()
+  "Get the project key of the current issue."
+  (jira-table-extract-field jira-issues-fields :project-key jira-detail--current))
+
+(defun jira-detail--is-subtask ()
+  "Check if the current issue is a subtask."
+  (eq (jira-table-extract-field jira-issues-fields :issue-type-subtask jira-detail--current) t))
+
 (defun jira-detail--header (header)
   "Format HEADER to be used as a header in the detail view."
   (concat
@@ -421,6 +429,13 @@
    :data `(("fields" . ((,field-id . ,value))))
    :callback (lambda (_data _response) (jira-detail-show-issue key))))
 
+(defun jira-detail--create-issue-from-fields (fields)
+  "Create a new issue with FIELDS."
+  (jira-api-call
+   "POST" "issue/"
+   :data `(("fields" . ,fields))
+   :callback (lambda (data _response) (jira-detail-show-issue (alist-get 'key data)))))
+
 (defun jira-detail--update-timetracking-action (field-id value key)
   ;; Update timetracking FIELD-ID with VALUE for the current issue.
   (jira-api-call
@@ -433,7 +448,7 @@
   (unless jira-detail--current-update-metadata
     (setq jira-detail--current-update-metadata
           (jira-api-get-create-metadata
-           (jira-table-extract-field jira-issues-fields :project-key jira-detail--current)
+           (jira-detail--project-key)
            (jira-table-extract-field jira-issues-fields :issue-type-id jira-detail--current)
            :sync t)))
   jira-detail--current-update-metadata)
@@ -491,6 +506,7 @@
    ("O" "Open issue in browser"
     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
    ("P" "Show parent issue" (lambda () (interactive) (jira-detail--show-parent-issue)))
+   ("S" "Add subtask" (lambda () (interactive) (jira-detail--create-subtask)))
    ("U" "Update issue field"
     (lambda () (interactive) (jira-detail--update-field)))
    ("f" "Find issue by key/url"
@@ -508,32 +524,34 @@
   (let ((map (copy-keymap magit-section-mode-map)))
     (define-key map (kbd "?") 'jira-detail--actions-menu)
     (define-key map (kbd "+")
-      (lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
+		(lambda () (interactive ) (jira-detail--add-comment jira-detail--current-key)))
     (define-key map (kbd  "-")
-     (lambda () "Remove comment at point"
-       (interactive) (jira-detail--remove-comment-at-point)))
+		(lambda () "Remove comment at point"
+		  (interactive) (jira-detail--remove-comment-at-point)))
     (define-key map (kbd "C")
-      (lambda () "Change issue status"
-	(interactive) (jira-detail--change-issue-status)))
+		(lambda () "Change issue status"
+		  (interactive) (jira-detail--change-issue-status)))
     (define-key map (kbd "O")
-      (lambda () "Open issue in browser"
-	(interactive)  (jira-actions-open-issue jira-detail--current-key)))
+		(lambda () "Open issue in browser"
+		  (interactive)  (jira-actions-open-issue jira-detail--current-key)))
     (define-key map (kbd "U")
-      (lambda () "Update issue field"
-	(interactive) (jira-detail--update-field)))
+		(lambda () "Update issue field"
+		  (interactive) (jira-detail--update-field)))
     (define-key map (kbd "f")
-      (lambda () "Find issue by key"
-        (interactive) (jira-detail-find-issue-by-key)))
+		(lambda () "Find issue by key"
+		  (interactive) (jira-detail-find-issue-by-key)))
     (define-key map (kbd "c")
-      (lambda () "Copy selected issue id to clipboard"
-	(interactive)
-	(jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
+		(lambda () "Copy selected issue id to clipboard"
+		  (interactive)
+		  (jira-actions-copy-issues-id-to-clipboard jira-detail--current-key)))
     (define-key map (kbd "g")
-      (lambda () "Refresh issue detail"
-	(interactive) (jira-detail-show-issue jira-detail--current-key)))
+		(lambda () "Refresh issue detail"
+		  (interactive) (jira-detail-show-issue jira-detail--current-key)))
     (define-key map (kbd "P")
-      (lambda () "Show parent issue"
-	(interactive) (jira-detail--show-parent-issue)))
+		(lambda () "Show parent issue"
+		  (interactive) (jira-detail--show-parent-issue)))
+    (define-key map (kbd "S")
+		(lambda () "Add subtask" (interactive) (jira-detail--create-subtask)))
     map)
   "Keymap for Jira Issue Detail buffers.")
 
@@ -544,6 +562,35 @@
     (if (and parent-key (not (string= parent-key "")))
         (jira-detail-show-issue parent-key)
       (message "No parent issue for the current issue."))))
+
+(defun jira-detail--create-subtask-type ()
+  "Find subtasks types available for the current project, asking the user to
+ choose one if there are multiple options."
+  (let* ((project (jira-detail--project-key))
+         (response (jira-api-get-project-issue-types project :sync t))
+         (types (alist-get 'issuetypes (aref (alist-get 'projects response) 0)))
+         (subtasks-types
+          (cl-remove-if-not (lambda (item) (eq (cdr (assoc 'subtask item)) t))
+			    (append types nil))))
+    (if (> (length subtasks-types) 1)
+        (let* ((choices
+                (mapcar
+                 (lambda (item)
+                   (cons (format "%s" (cdr (assoc 'name item))) (cdr (assoc 'id item))))
+                 subtasks-types)))
+          (completing-read "Select subtask type: " choices nil t))
+      (alist-get 'id (car subtasks-types)))))
+
+(defun jira-detail--create-subtask ()
+  "Create a subtask for the current issue."
+  (if (jira-detail--is-subtask)
+      (message "Cannot create a subtask for a subtask.")
+    (let* ((project (jira-detail--project-key))
+           (type-id (jira-detail--create-subtask-type)))
+      (jira-complete-ask-issue-fields
+       project type-id
+       :parent-key jira-detail--current-key
+       :callback #'jira-detail--create-issue-from-fields))))
 
 
 (define-derived-mode jira-detail-mode magit-section-mode "Jira Detail"

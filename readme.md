@@ -1,5 +1,4 @@
 # jira.el
----
 
 Emacs integration for [Atlassian's Jira](https://www.atlassian.com/software/jira).
 
@@ -13,11 +12,13 @@ modifying certain properties, and adding worklogs.
 Additionally, it provides support for displaying all worklogs from the
 [Tempo](https://www.tempo.io/products/jira-time-tracking) integration.
 
-## 🎉 Version 2.0.0 Release! 🎉
+## 🎉 Version 2 Release! 🎉
 
 We're excited to announce a major update to `jira.el`, bringing significant enhancements
 to the Jira Detail view and overall usability:
 
+- **Create issue subtasks**
+  - Press `S` from the detail view of an issue to create a subtask.
 - **Enhanced Issue Management from Detail View:**
   - Press `?` to reveal a comprehensive menu of all available actions and keybindings.
   - Update various issue fields effortlessly using `U`. Enjoy **intelligent suggestions**

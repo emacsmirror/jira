@@ -312,6 +312,13 @@ CALLBACK is the function to call after the request is done."
     (when sync
       (request-response-data response))))
 
+(cl-defun jira-api-get-project-issue-types (project-key &key callback sync)
+  "Get the issue types available for PROJECT-KEY, optionally CALLBACK if provided
+and making the request synchronous if SYNC."
+  (let* ((url (format "issue/createmeta/?projectKeys=%s" project-key))
+	 (response (jira-api-call "GET" url :callback callback :sync sync)))
+    (when sync (request-response-data response))))
+
 (cl-defun jira-api-get-basic-data (&key force)
   "Get some basic data (custom fields, projects, statuses, etc) from JIRA API.
 

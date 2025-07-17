@@ -132,82 +132,111 @@
 
 (defun jira-complete--ask-autocomplete (fname url is-array)
   ;; ask a user for an initial values to call autocomplete and show options
-  (let* ((msg (format "Find options for field [%s]. Write something and press RET: " fname))
-	 (query (read-string msg))
-	 (values (jira-complete--autocomplete-options url query))
-	 (choices (mapcar 'jira-complete--allowed-value-choices values)))
+  ;; reporter autocomplete url has no ?query= at the end, so user cannot pre-filter it
+  ;; see https://jira.atlassian.com/browse/JRACLOUD-84826
+  (let* ((ask-query (not (string-search "user/recommend?context=Reporter" url)))
+	 (msg (format "Find options for field [%s]. Write something and press RET: " fname))
+         (query (if ask-query (read-string msg) ""))
+         (values (jira-complete--autocomplete-options url query))
+         (choices (mapcar 'jira-complete--allowed-value-choices values)))
     (if (seq-empty-p choices)
-	(message "No values found for %s" fname)
+        (message "No values found for %s" fname)
       (if is-array
-          (let ((selected
-		 (completing-read-multiple
-                  (format "Select values for %s: " fname) choices nil t)))
+          (let ((selected (completing-read-multiple
+			   (format "Select values for %s: " fname) choices nil t)))
             (mapcar (lambda (s) `((id . ,(cdr (assoc s choices))))) selected))
-        (let ((selected
-	       (completing-read
-		(format "Select a value for %s: " fname) choices nil t)))
-	  `((id . ,(cdr (assoc selected choices)))))))))
+        (let ((selected (completing-read (format "Select a value for %s: " fname) choices nil t)))
+          `((id . ,(cdr (assoc selected choices)))))))))
 
 (defun jira-complete-ask-field (fd)
   ;; ask the user for a value for a field, providing some help
   ;; fd comes from the result of the metadata call
   (let* ((values (alist-get 'allowedValues fd))
-	 (fid (alist-get 'fieldId fd))
-	 (fname (alist-get 'name fd))
+         (fid (alist-get 'fieldId fd))
+         (fname (alist-get 'name fd))
          (schema (alist-get 'schema fd))
          (is-array (string= (alist-get 'type schema) "array"))
-         (schema-type (if is-array (alist-get 'items schema) (alist-get 'type schema)))
-	 (autocomplete (alist-get 'autoCompleteUrl fd)))
-    (cond ((or (string-equal fname "Sprint") (string-equal fname "Labels"))
-	   (jira-complete--autocomplete-from-jql fid fname is-array))
-	  ((and autocomplete (not (string-empty-p autocomplete)))
-	   (jira-complete--ask-autocomplete fname autocomplete is-array))
-          ((or (string= schema-type "date") (string= schema-type "datetime"))
-           (let* ((with-time-p (string= schema-type "datetime"))
-                  (time (org-read-date with-time-p t)))
-             (when time
-               (if with-time-p
-                   (format-time-string "%Y-%m-%dT%H:%M:%S.000+0000" time)
-                 (format-time-string "%Y-%m-%d" time)))))
-          ((and (string= schema-type "issuelink") (or (not values) (seq-empty-p values)))
-           (let ((issue-key (read-string (format "Enter issue key for %s: " fname))))
-               (when (and issue-key (not (string-empty-p issue-key)))
-                 `((key . ,issue-key)))))
-	  ((and values (not (seq-empty-p values)))
-	   ;; extract the id and name of the field
-	   (let* ((choices (mapcar 'jira-complete--allowed-value-choices values)))
-             (if is-array
-                 (let ((selected
-			(completing-read-multiple
-                         (format "Select values for %s: " fname) choices nil t)))
-                   (mapcar (lambda (s) `((id . ,(cdr (assoc s choices))))) selected))
-               (let ((selected
-		      (completing-read (format "Select a %s: " fname) choices nil t)))
-	         `((id . ,(cdr (assoc selected choices))))))))
-	  (t (read-string (format "Enter value for field %s: " fname))))))
+         (schema-type
+          (if is-array
+              (alist-get 'items schema)
+            (alist-get 'type schema)))
+         (autocomplete (alist-get 'autoCompleteUrl fd)))
+    (cond
+     ((or (string-equal fname "Sprint") (string-equal fname "Labels"))
+      (jira-complete--autocomplete-from-jql fid fname is-array))
+     ((and autocomplete (not (string-empty-p autocomplete)))
+      (jira-complete--ask-autocomplete fname autocomplete is-array))
+     ((or (string= schema-type "date") (string= schema-type "datetime"))
+      (let* ((with-time-p (string= schema-type "datetime"))
+             (time (org-read-date with-time-p t)))
+        (when time
+          (if with-time-p
+              (format-time-string "%Y-%m-%dT%H:%M:%S.000+0000" time)
+            (format-time-string "%Y-%m-%d" time)))))
+     ((and (string= schema-type "issuelink") (or (not values) (seq-empty-p values)))
+      (let ((issue-key (read-string (format "Enter issue key for %s: " fname))))
+        (when (and issue-key (not (string-empty-p issue-key)))
+          `((key . ,issue-key)))))
+     ((and values (not (seq-empty-p values)))
+      ;; extract the id and name of the field
+      (let* ((choices (mapcar 'jira-complete--allowed-value-choices values)))
+        (if is-array
+            (let ((selected
+                   (completing-read-multiple
+                    (format "Select values for %s: " fname) choices nil t)))
+              (mapcar (lambda (s) `((id . ,(cdr (assoc s choices))))) selected))
+          (let ((selected (completing-read (format "Select a %s: " fname) choices nil t)))
+            `((id . ,(cdr (assoc selected choices))))))))
+     (t
+      (read-string (format "Enter value for field %s: " fname))))))
 
 
-(defun jira-complete--issue-from-metadata (metadata)
+(cl-defun jira-complete--issue-from-metadata
+    (metadata &key issue-type project-key parent-key callback)
   "Create a Jira issue asking the user values for each on of the files
-from the METADATA provided by the API."
+from the METADATA provided by the API.
+
+If project-key or parent-key are provided, they will be used to automatically
+fill the 'project' and 'parent' fields."
   (let* ((fields (alist-get 'fields metadata))
 	 (required-fields
-	  (seq-filter (lambda (field) (eq (alist-get 'required field) t)) fields))
+	  (seq-filter (lambda (field)
+			(and (eq (alist-get 'required field) t)
+			     (not (eq (alist-get 'hasDefaultValue field) t))))
+		      fields))
 	 (pending-ields
 	  (seq-filter (lambda (field) (jira-complete--is-allowed field)) fields))
 	 (required-fields-keys
-	  (mapcar (lambda (field) (alist-get 'name field)) required-fields))
+	  (mapcar (lambda (field) (alist-get 'key field)) required-fields))
 	 (field-values
-	  (mapcar (lambda (field) (jira-complete-ask-field field))
-		  required-fields)))
-    (message "%s"  (cl-mapcar #'cons required-fields-keys field-values))))
+	  (mapcar
+	   (lambda (field)
+	     (cond
+	      ((and parent-key (string= (alist-get 'key field) "parent"))
+	       `((key . ,parent-key)))
+	      ((and project-key (string= (alist-get 'key field) "project"))
+	       `((key . ,project-key)))
+	      ((and issue-type (string= (alist-get 'key field) "issuetype"))
+	       `((id . ,issue-type)))
+	      (t
+	       (jira-complete-ask-field field))))
+	   required-fields))
+	 (response (cl-mapcar #'cons required-fields-keys field-values)))
+    (if callback (funcall callback response) (message "%s" response))))
 
 
-(defun jira-complete-ask-issue-fields (project-key issue-type-id)
+(cl-defun jira-complete-ask-issue-fields (project-key issue-type-id &key parent-key callback)
   "Ask for the fields required to create a Jira issue."
   (jira-api-get-create-metadata
    project-key issue-type-id
-   (lambda (data response) (jira-complete--issue-from-metadata data))))
+   :callback
+   (lambda (data response)
+     (jira-complete--issue-from-metadata
+      data
+      :issue-type issue-type-id
+      :project-key project-key
+      :parent-key parent-key
+      :callback callback))))
 
 (provide 'jira-complete)
 

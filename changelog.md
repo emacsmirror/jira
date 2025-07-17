@@ -1,4 +1,8 @@
 # Changelog
+
+## 2.2.0 (2025-07-17)
+- Allow the creation of subtasks from issue detail view.
+
 ## 2.1.0 (2025-07-08)
 - Add new section for subtasks in the detail view.
 - Prepend appropriate emojis to headings in the detail view.
