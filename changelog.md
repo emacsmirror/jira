@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.3.0 (2025-07-19)
+- Support panel block formatting in issue detail view.
+
 ## 2.2.0 (2025-07-17)
 - Allow the creation of subtasks from issue detail view.
 

@@ -118,9 +118,29 @@
   nil
   "A thunk returning a prefix for list item nodes.")
 
+(defun jira-doc--format-boxed-text (text prefix)
+  "Format TEXT in an ASCII box with line wrapping."
+  (let* ((fill-column 80)
+         (lines (with-temp-buffer
+                  (insert text) (fill-region (point-min) (point-max))
+                  (split-string (buffer-string) "\n" t)))
+         (width (apply #'max (mapcar #'string-width lines)))
+         (hborder (concat "┌" prefix (make-string width ?-) "┐"))
+         (bborder (concat "└" (make-string (+ width 2) ?-) "┘"))
+         (boxed-lines
+          (mapcar (lambda (line)
+                    (concat "| " line (make-string (- width (string-width line)) ? ) " |"))
+                  lines)))
+    (concat
+     "\n"
+     (string-join
+      (append (list hborder) boxed-lines (list bborder)) "\n")
+     "\n")))
+
 (defun jira-doc--format-content-block(block)
   "Format content BLOCK to a string."
   (let* ((type (alist-get 'type block))
+	 (attrs (alist-get 'attrs block))
          (sep (if (string= type "paragraph") "" "\n"))
          (prefix (cond ((string= type "listItem")
                         (concat (make-string jira-doc--indent ?\ )
@@ -132,11 +152,11 @@
                        (t
                         "")))
 	 (content
-	  (concat prefix
-		  (jira-doc--list-to-str
-		   (mapcar (lambda (b) (jira-doc--format-block b))
-			   (alist-get 'content block))
-                   sep))))
+	  (concat
+	   prefix
+	   (jira-doc--list-to-str
+	    (mapcar (lambda (b) (jira-doc--format-block b)) (alist-get 'content block))
+            sep))))
     (cond
      ((string= type "table")
       "\n<TABLES NOT SUPPORTED BY jira.el>\n")
@@ -145,8 +165,15 @@
      ((string= type "blockquote")
       (jira-fmt-blockquote content))
      ((string= type "heading")
-      (jira-fmt-heading content (alist-get 'level
-                                           (alist-get 'attrs block))))
+      (jira-fmt-heading
+       content (alist-get 'level (alist-get 'attrs block))))
+     ((string= type "panel")
+      (let* ((ptype (alist-get 'panelType attrs))
+	     (prefix (cond ((string= ptype "info") "ℹ️")
+			   ((string= ptype "warning") "⚠️")
+			   ((string= ptype "note") "✏️")
+			   (t ""))))
+	(jira-doc--format-boxed-text content prefix)))
      (t content))))
 
 (defun jira-doc--format-list-block (block)
