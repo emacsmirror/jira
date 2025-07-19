@@ -132,8 +132,8 @@ configured user for the active sprint. Once the list is loaded, press
 the selected issue, add worklogs, and more.
 
 Press `l` to select the filters to be applied to the list of
-issues. You can filter by several fields or even write your own `JQL`
-filter.
+issues. You can filter by several fields, use one of your starred filters,
+or even write your own `JQL` filter.
 
 - Thanks to
 [transient](https://magit.vc/manual/transient/Saving-Values.html#Saving-Values),

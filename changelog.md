@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.0 (2025-07-19)
+- Add support for favorite JQL filters.
+
 ## 2.3.0 (2025-07-19)
 - Support panel block formatting in issue detail view.
 

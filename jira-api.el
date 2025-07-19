@@ -69,6 +69,7 @@
 (defvar jira-active-issue-transitions nil "Allowed transitions for active issue.")
 (defvar jira-statuses nil "Jira allowed statuses.")
 (defvar jira-resolutions nil "Jira allowed resolutions.")
+(defvar jira-filters nil "Jira user filters.")
 (defvar jira-projects nil "Jira projects (5 most recent).")
 (defvar jira-projects-versions nil "Jira project versions (releases).")
 
@@ -265,6 +266,20 @@ CALLBACK is the function to call after the request is done."
            (when callback (funcall callback)))))
     (when callback (funcall callback))))
 
+(cl-defun jira-api-get-filters (&key force callback)
+  "Get the list of user filters.
+
+FORCE will force the request even if the filters are already stored.
+CALLBACK is the function to call after the request is done."
+  (if (or force (not jira-filters))
+      (let* ((fmt (lambda (s) (cons (alist-get 'name s) (alist-get 'jql s)))))
+        (jira-api-call
+         "GET" "filter/my?includeFavourites=true"
+         :callback
+         (lambda (data _response)
+           (setq jira-filters (mapcar fmt data))
+           (when callback (funcall callback)))))))
+
 (cl-defun jira-api-get-projects (&key force callback)
   "Get the 10 most recent projects.
 
@@ -327,7 +342,8 @@ FORCE will force the request even if the data is already stored."
   (let* ((fds (lambda () (jira-api-get-fields :force force)))
          (st (lambda () (jira-api-get-statuses :force force :callback fds)))
          (res (lambda () (jira-api-get-resolutions :force force :callback st)))
-         (prj (lambda () (jira-api-get-projects :force force :callback res)))
+         (flt (lambda () (jira-api-get-filters :force force :callback res)))
+         (prj (lambda () (jira-api-get-projects :force force :callback flt)))
          (account (lambda () (jira-api-get-account-id :force force :callback prj))))
     (funcall account)))
 

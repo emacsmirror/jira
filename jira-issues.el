@@ -64,8 +64,7 @@ This information is added to worklogs to make it easier to identify")
   (let* ((parent (lambda (fd) (jira-table-field-parent jira-issues-fields fd)))
          (fields (append (mapcar parent jira-issues-table-fields)
 			 jira-issues-required-fields)))
-    (when jira-debug
-        (message (concat "Get issues with jql " jql)))
+    (when jira-debug (message (concat "Get issues with jql " jql)))
     (jira-api-call
      "GET" "search"
      :params `(("jql" . ,jql)
@@ -120,7 +119,9 @@ This information is added to worklogs to make it easier to identify")
   (let* ((args (transient-args 'jira-issues-menu))
          (myself (transient-arg-value "--myself" args))
          (current-sprint (transient-arg-value "--current-sprint" args))
-         (jql (transient-arg-value "--jql=" args))
+	 (filter-name (transient-arg-value "--filter=" args))
+         (jql (or (transient-arg-value "--jql=" args)
+		  (when filter-name (cdr (assoc filter-name jira-filters)))))
          (status (transient-arg-value "--status=" args))
          (project (transient-arg-value "--project=" args))
          (resolution (transient-arg-value "--resolution=" args))
@@ -139,13 +140,14 @@ This information is added to worklogs to make it easier to identify")
 (defun jira-issues--filter-invalid-if-jql ()
   "Return t if JQL filter is set."
   (if transient-current-command
-      (transient-arg-value "--jql=" (transient-args transient-current-command))))
+      (or (transient-arg-value "--jql=" (transient-args transient-current-command))
+	  (transient-arg-value "--filter=" (transient-args transient-current-command)))))
 
 (transient-define-prefix jira-issues-menu ()
   "Show menu for listing Jira Issues."
-   :refresh-suffixes t
-   :value '("--myself")
-   [["Arguments"
+  :refresh-suffixes t
+  :value '("--myself")
+  [["Arguments"
     ("m" "Just from myself" "--myself"
      :transient t
      :inapt-if jira-issues--filter-invalid-if-jql)
@@ -167,6 +169,10 @@ This information is added to worklogs to make it easier to identify")
      :inapt-if jira-issues--filter-invalid-if-jql
      :choices
      (lambda () (mapcar (lambda (res) (car res)) jira-resolutions)))
+    ("f" "Filter" "--filter="
+     :transient transient--do-call
+     :choices
+     (lambda () (if jira-filters (mapcar 'car jira-filters) (message "No filters found"))))
     ("j""JQL filter" "--jql="
      :transient transient--do-call)
     ("v" "Fix Versions" "--version="
@@ -182,7 +188,7 @@ This information is added to worklogs to make it easier to identify")
     ("C-x C-s" :info (concat (propertize "Persist" 'face 'italic)
                              " current arguments for all Emacs sessions"))
     ("C-x C-k" :info (concat (propertize "Reset" 'face 'italic)
-                           " arguments to default ones"))]]
+                             " arguments to default ones"))]]
 
   ["Actions"
    ("l" "List Jira Issues" tablist-revert)])
