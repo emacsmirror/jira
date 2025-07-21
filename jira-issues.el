@@ -201,25 +201,30 @@ This information is added to worklogs to make it easier to identify")
 (transient-define-prefix jira-issues-actions-menu ()
   "Show menu for actions on Jira Issues."
   [[:description "Jira Issues List"
-                ("?" "Show this menu" jira-issues-actions-menu)
-                ("g" "Refresh list" tablist-revert)
-                ("l" "List Jira Issues menu" jira-issues-menu)
-		("f" "Find issue by key/url"
-		 (lambda () (interactive) (jira-detail-find-issue-by-key)))
-		("T" "Jump to Tempo worklogs"
-		 (lambda () (interactive) (jira-issues--jump-to-tempo)))]]
+                 ("?" "Show this menu" jira-issues-actions-menu)
+                 ("g" "Refresh list" tablist-revert)
+                 ("l" "List Jira Issues menu" jira-issues-menu)
+		 ("f" "Find issue by key/url"
+		  (lambda () (interactive) (jira-detail-find-issue-by-key)))
+		 ("T" "Jump to Tempo worklogs"
+		  (lambda () (interactive) (jira-issues--jump-to-tempo)))]]
   [[:description
     (lambda () (jira-utils-transient-description "Actions on issue"))
     :inapt-if-not jira-utils-marked-item
     ("c" "Copy selected issue id to clipboard"
      (lambda () (interactive)
-       (jira-actions-copy-issues-id-to-clipboard (jira-utils-marked-item))))
+       (jira-actions-copy-issues-id-to-clipboard (jira-utils-marked-item)))
+     :inapt-if (lambda () (interactive) (jira-utils-multiple-marked-items-p)))
     ("C" "Change issue" jira-actions-change-issue-menu)
     ("I" "Show issue information"
-     (lambda () (interactive) (jira-detail-show-issue (jira-utils-marked-item))))
+     (lambda () (interactive) (jira-detail-show-issue (jira-utils-marked-item)))
+     :inapt-if (lambda () (interactive) (jira-utils-multiple-marked-items-p)))
     ("O" "Open issue in browser"
-     (lambda () (interactive) (jira-actions-open-issue (jira-utils-marked-item))))
-    ("W" "Add worklog to issue" jira-actions-add-worklog-menu)]])
+     (lambda () (interactive) (jira-actions-open-issue (jira-utils-marked-item)))
+     :inapt-if (lambda () (interactive) (jira-utils-multiple-marked-items-p)))
+    ("W" "Add worklog to issue"
+     jira-actions-add-worklog-menu
+     :inapt-if (lambda () (interactive) (jira-utils-multiple-marked-items-p)))]])
 
 (defvar jira-issues-mode-map
   (let ((map (make-sparse-keymap)))

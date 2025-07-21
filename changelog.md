@@ -1,4 +1,7 @@
 # Changelog
+## 2.6.0 (2025-07-21)
+- Add ability to bulk change issues status
+
 ## 2.5.0 (2025-07-21)
 - Add ability to add/remove watchers on an issue
 

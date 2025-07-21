@@ -146,17 +146,27 @@
                     (:columns . 10)
                     (:name . "Resolution")))))
 
+(defun jira-utils-marked-items ()
+  "Return the marked items in the current tablist"
+  (mapcar (lambda (i) (car i)) (tablist-get-marked-items)))
+
 (defun jira-utils-marked-item ()
-  "Return the marked item in the current tablist or the current issue key
-if we are in the Jira Detail buffer"
-  (or (car (car (tablist-get-marked-items)))
-      jira-detail--current-key))
+  "Return the first  marked item in the current tablist or the current
+issue key if we are in the Jira Detail buffer"
+  (or (car (car (tablist-get-marked-items))) jira-detail--current-key))
+
+(defun jira-utils-multiple-marked-items-p ()
+  "Return t if there are multiple marked items in the current tablist."
+  (let ((marked-items (tablist-get-marked-items)))
+    (and marked-items (> (length marked-items) 1))))
 
 (defun jira-utils-transient-description (prefix &optional item)
   "Return a transient description for the given ITEM (or the marked one)
 with the given PREFIX."
-  (let ((item (or item (jira-utils-marked-item))))
-    (if (stringp item) (concat prefix " [" (format "%s" item) "]") prefix)))
+  (let* ((item (or item (jira-utils-marked-items)))
+	 (item-str (if (listp item) (string-join item ", ") item)))
+    (cond ((stringp item-str) (concat prefix " [" (format "%s" item-str) "]"))
+	  (t  prefix))))
 
 (defun jira-utils-get-day-of-week (date-string)
   "Return the day of the week for a given DATE-STRING in the format YYYY-MM-DD."

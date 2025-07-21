@@ -104,20 +104,26 @@
          (status-id (cdr (assoc status jira-active-issue-transitions)))
          (time-estimate (transient-arg-value "--remaining-time-estimate=" args))
          (hook (lambda (_data _response)
-                 (cond ((eq major-mode 'jira-issues-mode)
-                        (run-hooks 'jira-issues-changed-hook))
-                       ((eq major-mode 'jira-detail-mode)
-                        (run-hooks 'jira-detail-changed-hook))))))
+		 ;; bulk status change API is asynchronous, so we
+		 ;; wait same time before reloading the list
+		 (run-at-time "1.5 sec" nil
+			      (lambda ()
+				(cond ((eq major-mode 'jira-issues-mode)
+				       (run-hooks 'jira-issues-changed-hook))
+				      ((eq major-mode 'jira-detail-mode)
+				       (run-hooks 'jira-detail-changed-hook)))))))
+	 (items (jira-utils-marked-items)))
     (when status-id
       (jira-api-call
-       "POST" (concat "issue/" (jira-utils-marked-item) "/transitions")
-       :data `(("transition" . (("id" . ,status-id))))
+       "POST" "bulk/issues/transition"
+       :data `(("bulkTransitionInputs" . ((("selectedIssueIdsOrKeys" . ,items)
+					   ("transitionId" . ,status-id)))))
        :callback hook))
     (when (or resolution time-estimate)
       (jira-api-call
        "PUT" (concat "issue/" (jira-utils-marked-item))
        :data `(("fields" .
-                ,(let (fields)
+		,(let (fields)
                    (when resolution
 		     (if (string-equal resolution "Unresolved")
 			 (push `( "resolution" . nil) fields)
@@ -127,25 +133,27 @@
                    fields)))
        :callback hook))))
 
-(transient-define-prefix jira-actions-change-issue-menu ()
-  "Show menu for updating a Jira Issue."
-  ["Arguments"
-   ("s" "Status" "--status="
-    :choices
-    (lambda () (mapcar (lambda (tr) (car tr)) jira-active-issue-transitions)))
-   ("r" "Resolution" "--resolution="
-    :choices
-    (lambda () (mapcar (lambda (res) (car res)) jira-resolutions)))
-   ("e" "Time Estimate" "--remaining-time-estimate=")]
-  ["Actions"
-   ("c" "Change" (lambda () (interactive) (jira-actions--change-issue)))]
+  (transient-define-prefix jira-actions-change-issue-menu ()
+    "Show menu for updating a Jira Issue."
+    ["Arguments"
+     ("s" "Status" "--status="
+      :choices
+      (lambda () (mapcar (lambda (tr) (car tr)) jira-active-issue-transitions)))
+     ("r" "Resolution" "--resolution="
+      :choices
+      (lambda () (mapcar (lambda (res) (car res)) jira-resolutions))
+      :inapt-if (lambda () (interactive) (jira-utils-multiple-marked-items-p)))
+     ("e" "Time Estimate" "--remaining-time-estimate="
+      :inapt-if (lambda () (interactive) (jira-utils-multiple-marked-items-p)))]
+    ["Actions"
+     ("c" "Change" (lambda () (interactive) (jira-actions--change-issue)))]
 
-  (interactive)
-  (if (jira-utils-marked-item)
-      (progn  ;; retrieve possible statuses transtions
-        (jira-api-get-transitions (jira-utils-marked-item))
-        (transient-setup 'jira-actions-change-issue-menu))
-    (message "Run jira-issues first")))
+    (interactive)
+    (if (jira-utils-marked-items)
+	(progn  ;; retrieve possible statuses transtions
+          (jira-api-get-transitions (jira-utils-marked-items))
+          (transient-setup 'jira-actions-change-issue-menu))
+      (message "Run jira-issues first")))
 
 (defun jira-actions-open-issue (issue-key)
   "Open ISSUE-KEY in browser."

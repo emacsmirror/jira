@@ -227,19 +227,22 @@ CALLBACK is the function to call after the request is done."
         (jira-api-call "GET" "field" :callback c))
     (when callback (funcall callback))))
 
-(defun jira-api-get-transitions (issue-key)
-  "Get the transitions available for an ISSUE-KEY."
+(defun jira-api-get-transitions (issue-keys)
+  "Get the transitions available for a a list of ISSUE-KEYS"
   (let* ((format-transition
-          (lambda (tr) (cons (alist-get 'name (alist-get 'to tr))
-                             (alist-get 'id tr))))
+          (lambda (tr) (cons (alist-get 'statusName (alist-get 'to tr))
+                             (alist-get 'transitionId tr))))
          (extract
           (lambda (data _response)
-            (let* ((transitions (alist-get 'transitions data)))
+            (let* ((trdata (car (append (alist-get 'availableTransitions data) nil)))
+		   (transitions (alist-get 'transitions trdata)))
               (mapcar format-transition transitions)))))
-    (jira-api-call "GET" (format "issue/%s/transitions" issue-key)
-                   :callback (lambda (data response)
-                               (setq jira-active-issue-transitions
-                                     (funcall extract data response))))))
+    (jira-api-call
+     "GET" "bulk/issues/transition"
+     :params `(("issueIdsOrKeys" . ,(mapconcat 'identity issue-keys ",")))
+     :callback (lambda (data response)
+                 (setq jira-active-issue-transitions
+                       (funcall extract data response))))))
 
 (cl-defun jira-api-get-statuses (&key force callback)
   "Get the list of allowed issues statuses.
