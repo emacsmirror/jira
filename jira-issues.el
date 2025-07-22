@@ -125,7 +125,9 @@ This information is added to worklogs to make it easier to identify")
          (status (transient-arg-value "--status=" args))
          (project (transient-arg-value "--project=" args))
          (resolution (transient-arg-value "--resolution=" args))
-         (version (transient-arg-value "--version=" args)))
+         (version (transient-arg-value "--version=" args))
+         (assignee (transient-arg-value "--assignee=" args))
+         (reporter (transient-arg-value "--reporter=" args)))
     (jira-issues--api-get-issues
      (or jql
          (jira-issues--api-filters-and
@@ -134,7 +136,13 @@ This information is added to worklogs to make it easier to identify")
                 (when status (concat "status = \"" status "\""))
                 (when project (concat "project = \"" project "\""))
                 (when resolution (concat "resolution = \"" resolution "\""))
-                (when version (concat "fixversion = \"" version "\"")))))
+                (when version (concat "fixversion = \"" version "\""))
+                (when assignee
+                  (let ((account-id (gethash assignee jira-users)))
+                    (when account-id (concat "assignee = " account-id))))
+                (when reporter
+                  (let ((account-id (gethash reporter jira-users)))
+                    (when account-id (concat "reporter = " account-id)))))))
      #'jira-issues--refresh-table)))
 
 (defun jira-issues--filter-invalid-if-jql ()
@@ -143,14 +151,36 @@ This information is added to worklogs to make it easier to identify")
       (or (transient-arg-value "--jql=" (transient-args transient-current-command))
 	  (transient-arg-value "--filter=" (transient-args transient-current-command)))))
 
+(defun jira-issues--myself-inapt-p ()
+  "Return t if JQL, filter or assignee is set."
+  (if transient-current-command
+      (let ((args (transient-args transient-current-command)))
+	(or (transient-arg-value "--jql=" args)
+	    (transient-arg-value "--filter=" args)
+	    (transient-arg-value "--assignee=" args)))))
+
+(defun jira-issues--assignee-inapt-p ()
+  "Return t if JQL, filter or myself is set."
+  (if transient-current-command
+      (let ((args (transient-args transient-current-command)))
+	(or (transient-arg-value "--jql=" args)
+            (transient-arg-value "--filter=" args)
+            (transient-arg-value "--myself" args)))))
+
+
 (transient-define-prefix jira-issues-menu ()
   "Show menu for listing Jira Issues."
   :refresh-suffixes t
   :value '("--myself")
   [["Arguments"
+    ("a" "Assignee" "--assignee="
+     :transient transient--do-call
+     :inapt-if jira-issues--assignee-inapt-p
+     :choices
+     (lambda () (when jira-users (hash-table-keys jira-users))))
     ("m" "Just from myself" "--myself"
-     :transient t
-     :inapt-if jira-issues--filter-invalid-if-jql)
+     :transient transient--do-call
+     :inapt-if jira-issues--myself-inapt-p)
     ("c" "Just from current sprint" "--current-sprint"
      :transient t
      :inapt-if jira-issues--filter-invalid-if-jql)
@@ -164,6 +194,11 @@ This information is added to worklogs to make it easier to identify")
      :inapt-if jira-issues--filter-invalid-if-jql
      :choices
      (lambda () (mapcar (lambda (prj) (car prj)) jira-projects)))
+    ("R" "Reporter" "--reporter="
+     :transient t
+     :inapt-if jira-issues--filter-invalid-if-jql
+     :choices
+     (lambda () (when jira-users (hash-table-keys jira-users))))
     ("r" "Resolution" "--resolution="
      :transient t
      :inapt-if jira-issues--filter-invalid-if-jql

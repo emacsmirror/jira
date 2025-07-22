@@ -1,4 +1,7 @@
 # Changelog
+## 2.7.0 (2025-07-22)
+- Add assignee and reporter filters to issues list
+
 ## 2.6.0 (2025-07-21)
 - Add ability to bulk change issues status
 
