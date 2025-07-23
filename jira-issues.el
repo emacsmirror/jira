@@ -138,8 +138,10 @@ This information is added to worklogs to make it easier to identify")
                 (when resolution (concat "resolution = \"" resolution "\""))
                 (when version (concat "fixversion = \"" version "\""))
                 (when assignee
-                  (let ((account-id (gethash assignee jira-users)))
-                    (when account-id (concat "assignee = " account-id))))
+                  (if (string-match-p "EMPTY" assignee)
+                      "assignee = EMPTY"
+                    (let ((account-id (gethash assignee jira-users)))
+                      (when account-id (concat "assignee = " account-id)))))
                 (when reporter
                   (let ((account-id (gethash reporter jira-users)))
                     (when account-id (concat "reporter = " account-id)))))))
@@ -177,7 +179,7 @@ This information is added to worklogs to make it easier to identify")
      :transient transient--do-call
      :inapt-if jira-issues--assignee-inapt-p
      :choices
-     (lambda () (when jira-users (hash-table-keys jira-users))))
+     (lambda () (when jira-users (cons "[EMPTY]" (hash-table-keys jira-users)))))
     ("m" "Just from myself" "--myself"
      :transient transient--do-call
      :inapt-if jira-issues--myself-inapt-p)

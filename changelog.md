@@ -1,4 +1,7 @@
 # Changelog
+## 2.7.1 (2025-07-23)
+- Add `EMPTY` option to assignee filter in issues view to find unassigned issues
+
 ## 2.7.0 (2025-07-22)
 - Add assignee and reporter filters to issues list
 
