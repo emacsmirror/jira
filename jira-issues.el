@@ -66,7 +66,7 @@ This information is added to worklogs to make it easier to identify")
 			 jira-issues-required-fields)))
     (when jira-debug (message (concat "Get issues with jql " jql)))
     (jira-api-call
-     "GET" "search"
+     "GET" "search/jql"
      :params `(("jql" . ,jql)
                ("maxResults" . ,jira-issues-max-results)
                ("startAt" . 0)
