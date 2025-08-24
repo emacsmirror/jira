@@ -1,4 +1,7 @@
 # Changelog
+## 2.7.2 (2025-08-24)
+- Fix deprecated `search` endpoint, use `search/jql` instead.
+
 ## 2.7.1 (2025-07-23)
 - Add `EMPTY` option to assignee filter in issues view to find unassigned issues
 
