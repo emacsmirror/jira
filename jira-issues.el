@@ -41,7 +41,7 @@
 
 (defcustom jira-issues-table-fields
   '(:key :issue-type-name :status-name :assignee-name
-         :progress-percent :work-ratio :remaining-time :summary)
+    :progress-percent :work-ratio :remaining-time :summary)
   "Fields to show in the Jira issues table.
 
 Allowed values in variable jira-issues-fields."

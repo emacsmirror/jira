@@ -183,3 +183,4 @@ This is the list of customizations you can set:
   :group 'jira)
   (setq jira-status-faces '(("Pull-request" . jira-face-pr)))
   ```
+- `jira-datetime-format`: Format string for displaying datetimes (default: `%c`)

@@ -1,5 +1,9 @@
 # Changelog
-## 2.7.2 (2025-08-27)
+## 2.7.4 (2025-08-27)
+- Add `jira-datetime-format` setting to configure format string for displaying datetimes
+  in issues.
+
+## 2.7.3 (2025-08-27)
 - Add `parent-summary` to list of available issue fields.
 
 ## 2.7.2 (2025-08-24)

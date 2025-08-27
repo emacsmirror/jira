@@ -52,6 +52,11 @@ For example:
   :type '(alist :key-type string :value-type face)
   :group 'jira)
 
+(defcustom jira-datetime-format "%c"
+  "Format string for displaying datetimes."
+  :type 'string
+  :group 'jira)
+
 (defface jira-face-link
   '((t :inherit link)) "Face used to show links." :group 'jira)
 
@@ -165,7 +170,7 @@ COLOR-TODAY is a boolean to color the date if it is today."
   (if (and (stringp date) (not (string-empty-p date)))
       (let ((parsed-time (date-to-time date)))
 	(propertize
-	 (format-time-string "%c" parsed-time)
+	 (format-time-string jira-datetime-format parsed-time)
 	 'face 'jira-face-date))
     ""))
 
