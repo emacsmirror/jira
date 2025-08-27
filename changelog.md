@@ -1,4 +1,7 @@
 # Changelog
+## 2.7.2 (2025-08-27)
+- Add `parent-summary` to list of available issue fields.
+
 ## 2.7.2 (2025-08-24)
 - Fix deprecated `search` endpoint, use `search/jql` instead.
 
