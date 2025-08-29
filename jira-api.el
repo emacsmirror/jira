@@ -153,6 +153,8 @@ until it completes, otherwise it will be asynchronous."
   (message "[Jira API Call]: %s %s" verb endpoint)
   (when (and jira-debug data)
     (message "[Jira API Call Data]: %s" (json-encode data)))
+  (when (and jira-debug params)
+    (message "[Jira API Call Params]: %s" params))
   (let* ((username (jira-api--username jira-base-url))
 	 (token (jira-api--token jira-base-url))
 	 (auth (jira-api--auth-header username token))

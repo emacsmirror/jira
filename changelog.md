@@ -1,4 +1,8 @@
 # Changelog
+## 2.8.0 (2025-08-29)
+- Add pagination to the Jira issues list view. Now you can navigate between pages
+  using `M-n` and `M-p`. Also, a message is shown when there are no more pages.
+
 ## 2.7.4 (2025-08-27)
 - Add `jira-datetime-format` setting to configure format string for displaying datetimes
   in issues.

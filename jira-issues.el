@@ -47,9 +47,21 @@
 Allowed values in variable jira-issues-fields."
   :group 'jira :type 'list)
 
-(defcustom jira-issues-max-results 50
+(defcustom jira-issues-max-results 30
   "Maximum number of Jira issues to retrieve."
   :group 'jira :type 'integer)
+
+(defvar jira-issues--loading-p nil
+  "A flag to indicate if an API call is in progress.")
+(defvar jira-issues--current-jql nil
+  "The JQL query for the current issue list.")
+(defvar jira-issues--pagination-current nil
+  "The pagination token for the currently displayed page of issues.")
+(defvar jira-issues--pagination-next nil
+  "The pagination token for the next page of issues.")
+(defvar jira-issues--pagination-previous nil
+  "A list of pagination tokens for previously viewed pages.")
+
 
 ;; files that we always want to retrieve because they are used
 ;; in some operations
@@ -59,20 +71,19 @@ Allowed values in variable jira-issues-fields."
   "Hash map to store issue keys and the associated summaries.
 This information is added to worklogs to make it easier to identify")
 
-(defun jira-issues--api-get-issues (jql callback)
+(defun jira-issues--api-get-issues (jql callback &optional page-token)
   "Retrieve issues from the given JQL filter and call CALLBACK function."
   (let* ((parent (lambda (fd) (jira-table-field-parent jira-issues-fields fd)))
          (fields (append (mapcar parent jira-issues-table-fields)
-			 jira-issues-required-fields)))
+			 jira-issues-required-fields))
+         (params `(("jql" . ,jql)
+                   ("maxResults" . ,jira-issues-max-results)
+                   ("fields" . ,(mapconcat (lambda (x) (format "%s" x))
+                                           (cl-remove nil fields) ",")))))
+    (when page-token
+      (setq params (append params `(("nextPageToken" . ,page-token)))))
     (when jira-debug (message (concat "Get issues with jql " jql)))
-    (jira-api-call
-     "GET" "search/jql"
-     :params `(("jql" . ,jql)
-               ("maxResults" . ,jira-issues-max-results)
-               ("startAt" . 0)
-               ("fields" . ,(mapconcat (lambda (x) (format "%s" x))
-                                       (cl-remove nil fields) ",")))
-     :callback callback)))
+    (jira-api-call "GET" "search/jql" :params params :callback callback)))
 
 (defun jira-issues--api-filters-and (filters)
   "Concat all FILTERS with AND."
@@ -107,12 +118,41 @@ This information is added to worklogs to make it easier to identify")
           (puthash key summary map)))
     map))
 
+(defun jira-issues--fetch-and-display (page-token)
+  (when (not jira-issues--loading-p)
+    (setq jira-issues--loading-p t)
+    (setq jira-issues--pagination-current page-token)
+    (jira-issues--api-get-issues
+     jira-issues--current-jql #'jira-issues--refresh-table page-token)))
+
+(defun jira-issues-next-page ()
+  "Go to the next page of issues."
+  (interactive)
+  (if jira-issues--pagination-next
+      (progn
+        (push jira-issues--pagination-current jira-issues--pagination-previous)
+        (jira-issues--fetch-and-display jira-issues--pagination-next))
+    (message "No more pages.")))
+
+(defun jira-issues-previous-page ()
+  "Go to the previous page of issues."
+  (interactive)
+  (if jira-issues--pagination-previous
+      (let ((token (pop jira-issues--pagination-previous)))
+        (jira-issues--fetch-and-display token))
+    (message "Already on the first page.")))
+
 (defun jira-issues--refresh-table (data _response)
   "Refresh the table with the given RESPONSE DATA."
-  (let* ((issues (alist-get 'issues data)))
+  (let* ((issues (or (cdr (assoc 'issues data)) (vector)))
+         (next-token (cdr (assoc 'nextPageToken data))))
+    (setq jira-issues--pagination-next next-token)
+    (when jira-debug
+      (message "Jira IssueS: Page %d" (1+ (length jira-issues--pagination-previous))))
     (setq tabulated-list-entries (mapcar #'jira-issues--data-format-issue issues))
     (setq jira-issues-key-summary-map (jira-issues-store-issues-info issues))
-    (tabulated-list-print t)))
+    (tabulated-list-print t)
+    (setq jira-issues--loading-p nil)))
 
 (defun jira-issues--refresh ()
   "Refresh the table."
@@ -128,24 +168,27 @@ This information is added to worklogs to make it easier to identify")
          (version (transient-arg-value "--version=" args))
          (assignee (transient-arg-value "--assignee=" args))
          (reporter (transient-arg-value "--reporter=" args)))
-    (jira-issues--api-get-issues
-     (or jql
-         (jira-issues--api-filters-and
-          (list (when myself "assignee = currentUser()")
-                (when current-sprint "sprint in openSprints()")
-                (when status (concat "status = \"" status "\""))
-                (when project (concat "project = \"" project "\""))
-                (when resolution (concat "resolution = \"" resolution "\""))
-                (when version (concat "fixversion = \"" version "\""))
-                (when assignee
-                  (if (string-match-p "EMPTY" assignee)
-                      "assignee = EMPTY"
-                    (let ((account-id (gethash assignee jira-users)))
-                      (when account-id (concat "assignee = " account-id)))))
-                (when reporter
-                  (let ((account-id (gethash reporter jira-users)))
-                    (when account-id (concat "reporter = " account-id)))))))
-     #'jira-issues--refresh-table)))
+    (setq jira-issues--current-jql
+          (or jql
+              (jira-issues--api-filters-and
+               (list (when myself "assignee = currentUser()")
+                     (when current-sprint "sprint in openSprints()")
+                     (when status (concat "status = \"" status "\""))
+                     (when project (concat "project = \"" project "\""))
+                     (when resolution (concat "resolution = \"" resolution "\""))
+                     (when version (concat "fixversion = \"" version "\""))
+                     (when assignee
+                       (if (string-match-p "EMPTY" assignee)
+                           "assignee = EMPTY"
+                         (let ((account-id (gethash assignee jira-users)))
+                           (when account-id (concat "assignee = " account-id)))))
+                     (when reporter
+                       (let ((account-id (gethash reporter jira-users)))
+                         (when account-id (concat "reporter = " account-id))))))))
+    (setq jira-issues--pagination-current nil)
+    (setq jira-issues--pagination-next nil)
+    (setq jira-issues--pagination-previous nil)
+    (jira-issues--fetch-and-display nil)))
 
 (defun jira-issues--filter-invalid-if-jql ()
   "Return t if JQL filter is set."
@@ -244,7 +287,9 @@ This information is added to worklogs to make it easier to identify")
 		 ("f" "Find issue by key/url"
 		  (lambda () (interactive) (jira-detail-find-issue-by-key)))
 		 ("T" "Jump to Tempo worklogs"
-		  (lambda () (interactive) (jira-issues--jump-to-tempo)))]]
+		  (lambda () (interactive) (jira-issues--jump-to-tempo)))
+                 ("M-n" "Next page" jira-issues-next-page)
+                 ("M-p" "Previous page" jira-issues-previous-page)]]
   [[:description
     (lambda () (jira-utils-transient-description "Actions on issue"))
     :inapt-if-not jira-utils-marked-item
@@ -278,6 +323,8 @@ This information is added to worklogs to make it easier to identify")
     (define-key map "O" (lambda () (interactive)
                           (jira-actions-open-issue (jira-utils-marked-item))))
     (define-key map "W" 'jira-actions-add-worklog-menu)
+    (define-key map (kbd "M-n") 'jira-issues-next-page)
+    (define-key map (kbd "M-p") 'jira-issues-previous-page)
     map)
   "Keymap for `jira-issues-mode'.")
 
