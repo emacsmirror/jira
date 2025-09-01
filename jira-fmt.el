@@ -135,6 +135,13 @@ For example:
   "Action to open the link in BUTTON."
   (browse-url (button-get button 'href)))
 
+(defun jira-fmt-set-face (value face)
+  "Propertize VALUE with the given FACE"
+  ;; faces are not shown in jira-detail if we don´t set
+  ;; font-lock-face too
+  (let* ((with-face (propertize value  'face face)))
+    (propertize with-face  'font-lock-face face)))
+
 (defun jira-fmt-issue-key (issue-id)
   "Format ISSUE-ID as a link to the issue in Jira (in a tabulated list)."
   (list  issue-id
@@ -161,17 +168,17 @@ COLOR-TODAY is a boolean to color the date if it is today."
       (let ((value (concat date ", " (jira-utils-get-day-of-week date))))
         (if (and color-today
                  (string= date (format-time-string "%F" (current-time))))
-            (propertize value  'face 'jira-face-date-today)
-          (propertize value  'face 'jira-face-date)))
+            (jira-fmt-set-face value  'jira-face-date-today)
+          (jira-fmt-set-face value 'jira-face-date)))
     date))
 
 (defun jira-fmt-datetime (date)
   "Format an ISO 8601 DATE string into a human-readable format."
   (if (and (stringp date) (not (string-empty-p date)))
       (let ((parsed-time (date-to-time date)))
-	(propertize
+	(jira-fmt-set-face
 	 (format-time-string jira-datetime-format parsed-time)
-	 'face 'jira-face-date))
+	 'jira-face-date))
     ""))
 
 (defun jira-fmt-time-from-secs (secs)
@@ -180,20 +187,20 @@ COLOR-TODAY is a boolean to color the date if it is today."
 	 (secs-num (or secs 0))
          (hours (truncate (/ (float secs-num) 3600)))
          (minutes (truncate (/ (float (% secs-num 3600)) 60))))
-    (propertize
+    (jira-fmt-set-face
      (concat
       (if (> hours 0) (format "%sh" hours) "")
       (when (or (> minutes 0) (= hours 0))
         (concat (if (> hours 0) " "  "") (format "%sm" minutes))))
-     'face 'jira-face-time)))
+     'jira-face-time)))
 
 (defun jira-fmt-issue-progress (value)
   "Format progress VALUE as a percentage and adding color."
   (if value
       (let*  ((value (if (stringp value) (string-to-number value) value))
 	      (val (concat (if  (= value -1) "0" (format "%s" value)) "%")))
-	(cond ((= value 100) (propertize val  'face 'jira-face-status-done))
-              ((> value 100) (propertize val  'face 'jira-face-status-todo))
+	(cond ((= value 100) (jira-fmt-set-face val 'jira-face-status-done))
+              ((> value 100) (jira-fmt-set-face val  'jira-face-status-todo))
               (t val)))
     ""))
 
@@ -211,15 +218,15 @@ Extracts name from the status object."
   (if (jira-fmt--alist-p status)
       (let* ((status-name (or (alist-get 'name status) "Unknown"))
 	     (category (alist-get 'name (alist-get 'statusCategory status))))
-	(propertize (upcase status-name) 'face
-		    (or (cdr (assoc-string status-name jira-status-faces))
-			(jira-fmt--status-category-face category))))
+	(jira-fmt-set-face (upcase status-name)
+			   (or (cdr (assoc-string status-name jira-status-faces))
+			       (jira-fmt--status-category-face category))))
     ""))
 
 (defun jira-fmt-issue-status-category (category)
   "Format CATEGORY string adding color based on the value."
   (if (and (stringp category) (not (string-empty-p category)))
-      (propertize category 'face (jira-fmt--status-category-face category))
+      (jira-fmt-set-face category (jira-fmt--status-category-face category))
     ""))
 
 (defun jira-fmt-truncate (len str)
@@ -254,13 +261,13 @@ Extracts name from the status object."
 (defun jira-fmt-issue-type-name (value)
   "Format issue type VALUE."
   (if (and (stringp value) (not (string-empty-p value)))
-      (propertize value 'face 'bold)
+      (jira-fmt-set-face value 'bold)
     ""))
 
 (defun jira-fmt-bold (value)
   "Format VALUE as bold."
   (if (and (stringp value) (not (string-empty-p value)))
-      (propertize value 'face 'bold)
+      (jira-fmt-set-face value 'bold)
     ""))
 
 (defun jira-fmt-line-endings (text)
@@ -272,20 +279,20 @@ Extracts name from the status object."
 (defun jira-fmt-code (text)
   "Format TEXT as code."
   (if (and (stringp text) (not (string-empty-p text)))
-      (propertize text 'face 'jira-face-code)
+      (jira-fmt-set-face text 'jira-face-code)
     ""))
 
 (defun jira-fmt-mention (text)
   "Format TEXT as a mention."
   (if (and (stringp text) (not (string-empty-p text)))
-      (propertize text 'face 'jira-face-mention)
+      (jira-fmt-set-face text 'jira-face-mention)
     ""))
 
 (defun jira-fmt-emoji (text)
   "Format TEXT as an emoji."
   (if (and (stringp text) (not (string-empty-p text)))
       (if (string-match-p "^:[-a-z_]+:\\'" text)
-	  (propertize text 'face 'jira-face-emoji-reference)
+	  (jira-fmt-set-face text 'jira-face-emoji-reference)
 	;; otherwise, `text' is probably a normal Unicode emoji
 	text)
     ""))
@@ -339,6 +346,7 @@ See `jira-doc--marks' for the expected format of MARKS."
 		(cl-incf baseline-offset))
               (let ((props (append
                             (when face-attrs (list 'face face-attrs))
+			    (when face-attrs (list 'font-lock-face face-attrs))
                             (when (/= baseline-offset 0)
                               (list 'display `(raise ,baseline-offset))))))
 		(apply #'propertize clean-text props))))))
@@ -351,8 +359,8 @@ See `jira-doc--marks' for the expected format of MARKS."
   (if (and (stringp text) (not (string-empty-p text)))
       (let ((lines (string-split text "\n")))
 	(string-join (mapcar (lambda (line)
-                               (propertize (concat ">  " line)
-					   'face 'jira-face-blockquote))
+                               (jira-fmt-set-face (concat ">  " line)
+						  'jira-face-blockquote))
                              lines)
                      "\n"))
     ""))
@@ -360,12 +368,12 @@ See `jira-doc--marks' for the expected format of MARKS."
 (defun jira-fmt-heading (text level)
   "Format TEXT as a heading of importance LEVEL."
   (if (and (stringp text) (not (string-empty-p text)))
-        (let ((faces [jira-face-h1 jira-face-h2 jira-face-h3
-				   jira-face-h4 jira-face-h5 jira-face-h6]))
-	  (if (<= 1 level (length faces))
-              (propertize text 'face (aref faces (1- level)))
-	    (message "[Jira Fmt Error]: Invalid heading level %s" level)
-	    text))
+      (let ((faces [jira-face-h1 jira-face-h2 jira-face-h3
+				 jira-face-h4 jira-face-h5 jira-face-h6]))
+	(if (<= 1 level (length faces))
+            (jira-fmt-set-face text (aref faces (1- level)))
+	  (message "[Jira Fmt Error]: Invalid heading level %s" level)
+	  text))
     ""))
 
 (provide 'jira-fmt)

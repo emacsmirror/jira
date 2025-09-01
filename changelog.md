@@ -1,4 +1,7 @@
 # Changelog
+## 2.8.1 (2025-09-01)
+- Apply font-lock-face to faces to fix faces not being rendered in detail view.
+
 ## 2.8.0 (2025-08-29)
 - Add pagination to the Jira issues list view. Now you can navigate between pages
   using `M-n` and `M-p`. Also, a message is shown when there are no more pages.

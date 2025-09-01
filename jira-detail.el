@@ -112,7 +112,7 @@
 (defun jira-detail--header (header)
   "Format HEADER to be used as a header in the detail view."
   (concat
-   (propertize header 'face 'italic)
+   (jira-fmt-set-face header 'italic)
    (when (> (- 16 (string-width header)) 0)
      (make-string (- 16 (string-width header)) ?\s))))
 
@@ -226,10 +226,12 @@
             (insert "\n")
             (when jira-detail-show-announcements
               (insert "----------------------------------------------------------------\n")
-              (insert (propertize "jira.el v2.0" 'face 'jira-face-h1) " allows you to ")
+              (insert (jira-fmt-set-face "jira.el v2.0" 'jira-face-h1) " allows you to ")
               (insert "update fields with smart suggestions!\n")
-              (insert "Press " (propertize "?" 'face 'jira-face-date) " to open transient menu, ")
-              (insert "and " (propertize "U" 'face 'jira-face-date) " to update a field.")
+              (insert "Press " (jira-fmt-set-face "?"  'jira-face-date)
+		      " to open transient menu, ")
+              (insert "and " (jira-fmt-set-face "U" 'jira-face-date)
+		      " to update a field.")
               (insert "\n----------------------------------------------------------------\n\n"))))
         (magit-insert-section (description nil nil)
           (magit-insert-heading "📄 Description")

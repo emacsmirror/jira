@@ -261,13 +261,13 @@ This information is added to worklogs to make it easier to identify")
      :choices
      (lambda () (apply #'append (mapcar #'cdr jira-projects-versions))))]
    ["Arguments Help"
-    ("C-x" :info (concat (propertize "Check " 'face 'italic)
+    ("C-x" :info (concat (jira-fmt-set-face "Check " 'italic)
                          "additional options"))
-    ("C-x s" :info (concat (propertize "Set" 'face 'italic)
+    ("C-x s" :info (concat (jira-fmt-set-face "Set" 'italic)
                            " current arguments for Emacs session"))
-    ("C-x C-s" :info (concat (propertize "Persist" 'face 'italic)
+    ("C-x C-s" :info (concat (jira-fmt-set-face "Persist" 'italic)
                              " current arguments for all Emacs sessions"))
-    ("C-x C-k" :info (concat (propertize "Reset" 'face 'italic)
+    ("C-x C-k" :info (concat (jira-fmt-set-face "Reset" 'italic)
                              " arguments to default ones"))]]
 
   ["Actions"
