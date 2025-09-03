@@ -106,7 +106,7 @@
                   (format "cf[%s] is not EMPTY" (jira-complete--custom-field-id field-id))
                 (format "%s is not EMPTY" field-id)))
 	 (params `(("jql" . ,jql) ("maxResults" . ,100) ("fields" . ,field-id)))
-	 (req (jira-api-call "GET" "search/jql" :sync t :params  params))
+	 (req (jira-api-search :sync t :params params))
 	 (issues (alist-get 'issues (request-response-data req)))
 	 (extract (lambda (issue) (jira-complete--extract-field issue field-id)))
 	 (choices

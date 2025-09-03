@@ -81,6 +81,7 @@
 (defvar jira-filters nil "Jira user filters.")
 (defvar jira-projects nil "Jira projects (5 most recent).")
 (defvar jira-projects-versions nil "Jira project versions (releases).")
+(defvar jira-search-endpoint nil "Cached search endpoint: 'search' or 'search/jql'.")
 
 (defun jira-api--username (host)
   "Retrieve the username for HOST from config or auth-source."
@@ -140,7 +141,7 @@
     (message "[Jira API Response Headers]: %s" (or response-headers "No headers"))
     (message "[Jira API Response Body]: %s" (or response-data "No response body"))))
 
-(cl-defun jira-api-call (verb endpoint &key params data callback parser sync)
+(cl-defun jira-api-call (verb endpoint &key params data callback parser sync error)
   "Perform a VERB request to the Jira API ENDPOINT.
 
 PARAMS is a list of cons cells, DATA is the request body, and CALLBACK
@@ -149,7 +150,9 @@ in a buffer with the result data, defaulting to `json-read'.
 
 Sync is a boolean indicating whether the request should be
 synchronous or not. If SYNC is non-nil, the request will block
-until it completes, otherwise it will be asynchronous."
+until it completes, otherwise it will be asynchronous.
+
+ERROR is a function to call if the request fails."
   (message "[Jira API Call]: %s %s" verb endpoint)
   (when (and jira-debug data)
     (message "[Jira API Call Data]: %s" (json-encode data)))
@@ -175,9 +178,36 @@ until it completes, otherwise it will be asynchronous."
       :data (if data (json-encode data) nil)
       :parser (or parser 'json-read)
       :success callback
-      :error (cl-function
-              (lambda (&key response error-thrown &allow-other-keys)
-                (jira-api--callback-error-log response error-thrown))))))
+      :error (or error
+                 (cl-function
+                  (lambda (&key response error-thrown &allow-other-keys)
+                    (jira-api--callback-error-log response error-thrown)))))))
+
+(cl-defun jira-api-search (&key params callback sync)
+  "Perform a JQL search, auto-detecting the correct endpoint."
+  (if jira-search-endpoint
+      (jira-api-call "GET" jira-search-endpoint :params params :callback callback :sync sync)
+    (let* ((success-cb
+            (cl-function
+             (lambda (endpoint)
+               (cl-function
+                (lambda (data response)
+                  (setq jira-search-endpoint endpoint)
+                  (when callback (funcall callback data response)))))))
+           (error-cb
+            (cl-function
+             (lambda (&key response error-thrown &allow-other-keys)
+               (if (and response (= (request-response-status-code response) 404))
+                   (jira-api-call "GET" "search"
+                                  :params params
+                                  :sync sync
+                                  :callback (funcall success-cb "search"))
+                 (jira-api--callback-error-log response error-thrown))))))
+      (jira-api-call "GET" "search/jql"
+                     :params params
+                     :sync sync
+                     :callback (funcall success-cb "search/jql")
+                     :error error-cb))))
 
 (cl-defun jira-api-tempo-call (verb endpoint &key params callback)
   "Perform a VERB request to the Jira Tempo API ENDPOINT.

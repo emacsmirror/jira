@@ -83,7 +83,7 @@ This information is added to worklogs to make it easier to identify")
     (when page-token
       (setq params (append params `(("nextPageToken" . ,page-token)))))
     (when jira-debug (message (concat "Get issues with jql " jql)))
-    (jira-api-call "GET" "search/jql" :params params :callback callback)))
+    (jira-api-search :params params :callback callback)))
 
 (defun jira-issues--api-filters-and (filters)
   "Concat all FILTERS with AND."
