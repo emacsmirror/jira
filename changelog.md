@@ -1,4 +1,8 @@
 # Changelog
+## 2.8.2 (2025-09-06)
+- Restore compatibility of `jira.el` with older JIRA API versions where the `search/jql`
+  endpoint does not exist.
+
 ## 2.8.1 (2025-09-01)
 - Apply font-lock-face to faces to fix faces not being rendered in detail view.
 
