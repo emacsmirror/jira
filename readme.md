@@ -149,6 +149,17 @@ If you configured [Tempo integration](https://www.tempo.io/), you can
 also run `jira-tempo` to view the list of worklogs for the current
 week.
 
+## FAQ
+
+- ❓ **Does it work with my old on-premise instance?**
+
+	I try to provide support as much as possible, but I don’t have access to this kind of
+	JIRA installation, so I rely on the official documentation and user PRs and issues..
+	If you’re using API version 2, make sure to set `jira-api-version` (see the
+	**Customization** section). Version `v2.8.2` fixes an issue with older on-premise
+	instances related to the endpoint that lists issues. I’m also working on making issue
+	transitions work (see https://github.com/unmonoqueteclea/jira.el/issues/37).
+
 ## Customization
 
 This is the list of customizations you can set:
