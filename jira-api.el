@@ -261,20 +261,34 @@ CALLBACK is the function to call after the request is done."
 
 (defun jira-api-get-transitions (issue-keys)
   "Get the transitions available for a a list of ISSUE-KEYS"
-  (let* ((format-transition
-          (lambda (tr) (cons (alist-get 'statusName (alist-get 'to tr))
-                             (alist-get 'transitionId tr))))
+  ;; Jira API version 2 does not support bulk transitions
+  (let* ((bulk (if (= jira-api-version 3) t nil))
+	 (format-transition
+	  (if bulk
+              (lambda (tr) (cons (alist-get 'statusName (alist-get 'to tr))
+				 (alist-get 'transitionId tr)))
+	    (lambda (tr) (cons (alist-get 'name (alist-get 'to tr))
+                               (alist-get 'id tr)))))
          (extract
-          (lambda (data _response)
-            (let* ((trdata (car (append (alist-get 'availableTransitions data) nil)))
-		   (transitions (alist-get 'transitions trdata)))
-              (mapcar format-transition transitions)))))
-    (jira-api-call
-     "GET" "bulk/issues/transition"
-     :params `(("issueIdsOrKeys" . ,(mapconcat 'identity issue-keys ",")))
-     :callback (lambda (data response)
-                 (setq jira-active-issue-transitions
-                       (funcall extract data response))))))
+	  (if bulk
+              (lambda (data _response)
+		(let* ((trdata (car (append (alist-get 'availableTransitions data) nil)))
+		       (transitions (alist-get 'transitions trdata)))
+		  (mapcar format-transition transitions)))
+	    (lambda (data _response)
+              (let* ((transitions (alist-get 'transitions data)))
+		(mapcar format-transition transitions))))))
+    (if bulk
+	(jira-api-call
+	 "GET" "bulk/issues/transition"
+	 :params `(("issueIdsOrKeys" . ,(mapconcat 'identity issue-keys ",")))
+	 :callback (lambda (data response)
+                     (setq jira-active-issue-transitions
+			   (funcall extract data response))))
+      (jira-api-call "GET" (format "issue/%s/transitions" (first issue-keys))
+                     :callback (lambda (data response)
+				 (setq jira-active-issue-transitions
+                                       (funcall extract data response)))))))
 
 (cl-defun jira-api-get-statuses (&key force callback)
   "Get the list of allowed issues statuses.

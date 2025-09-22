@@ -456,10 +456,6 @@
         (cdr (assoc (cdr id) jira-fields))
       id)))
 
-(defun jira-detail--change-issue-status ()
-  ;; Change the status of the current issue.
-  (let ((jira-utils-marked-item jira-detail--current-key))
-    (jira-actions-change-issue-menu)))
 
 (defun jira-detail--update-field ()
   "Update a field for the current issue."
@@ -514,7 +510,7 @@
     (lambda () (interactive ) (jira-detail--remove-comment-at-point)))]
   ["Issue Actions"
    ("C" "Change issue status"
-    (lambda () (interactive) (jira-detail--change-issue-status)))
+    (lambda () (interactive) (jira-actions-change-issue-menu)))
    ("O" "Open issue in browser"
     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
    ("P" "Show parent issue" (lambda () (interactive) (jira-detail--show-parent-issue)))
@@ -543,13 +539,13 @@
 		  (interactive) (jira-detail--remove-comment-at-point)))
     (define-key map (kbd "C")
 		(lambda () "Change issue status"
-		  (interactive) (jira-detail--change-issue-status)))
+		  (interactive) (jira-actions-change-issue-menu)))
     (define-key map (kbd "O")
 		(lambda () "Open issue in browser"
 		  (interactive)  (jira-actions-open-issue jira-detail--current-key)))
     (define-key map (kbd "U")
-      (lambda () "Update issue field"
-	(interactive) (jira-detail--update-field)))
+		(lambda () "Update issue field"
+		  (interactive) (jira-detail--update-field)))
     (define-key map (kbd "w") 'jira-detail--watchers-menu)
     (define-key map (kbd "f")
 		(lambda () "Find issue by key"

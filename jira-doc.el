@@ -544,9 +544,7 @@ NAME should be a username defined in `jira-users'."
       ("content" .
        ,(jira-doc-build-toplevel-blocks paras)))))
 
-
 ;;; Building v2 texts.
-
 (defun jira-doc-build-v2 (text)
   "Format TEXT for Jira API v2."
   ;; Rewrite `...` into {{...}}.
@@ -564,9 +562,7 @@ NAME should be a username defined in `jira-users'."
                                       (concat "[~accountid:" account-id "]")))))
     (string-join blocks)))
 
-
 ;;; Entry point.
-
 (defun jira-doc-build (text)
   "Build a Jira document from TEXT."
   (if (= jira-api-version 3)

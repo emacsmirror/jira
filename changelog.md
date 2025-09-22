@@ -1,4 +1,7 @@
 # Changelog
+## 2.9.1 (2025-09-22)
+- Restore support for transitioning issue status in Jira API version 2.
+
 ## 2.9.0 (2025-09-15)
 - Add syntax highlighting for jira-edit-mode. Thanks @danielcmccarthy!
 
