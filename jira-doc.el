@@ -154,6 +154,26 @@
       (append (list hborder) boxed-lines (list bborder)) "\n")
      "\n")))
 
+(defun jira-doc--format-media-block (block)
+  (let ((media (mapcar (lambda (b)
+                         (let* ((attrs (alist-get 'attrs b))
+                                (type (alist-get 'type attrs))
+                                (id (alist-get 'id attrs))
+                                (collection (alist-get 'collection attrs)))
+                           (if (string= type "link")
+                               (let ((name (alist-get 'alt attrs id))
+                                     (marks (jira-doc--marks block)))
+                                 (jira-fmt-with-marks (concat "<" name ">") marks))
+                             (jira-fmt-placeholder (format "<file:%s%s>"
+                                                           (if (string= "" collection)
+                                                               ""
+                                                             (concat collection ":"))
+                                                           id)))))
+                       (alist-get 'content block))))
+  (concat
+   "\n"
+   (string-join media "\n"))))
+
 (defun jira-doc--format-content-block(block)
   "Format content BLOCK to a string."
   (let* ((type (alist-get 'type block))
@@ -177,6 +197,9 @@
     (cond
      ((string= type "table")
       "\n<TABLES NOT SUPPORTED BY jira.el>\n")
+     ((or (string= type "mediaGroup")
+          (string= type "mediaSingle"))
+      (jira-doc--format-media-block block))
      ((string= type "codeBlock")
       (concat "\n" (jira-fmt-code content) "\n"))
      ((string= type "blockquote")
