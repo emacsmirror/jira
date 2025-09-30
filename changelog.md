@@ -1,4 +1,8 @@
 # Changelog
+## 2.9.2 (2025-09-30)
+- Allow specialized modes to work with Jira attachments.
+- jira-complete-ask-issue: put default-input before the colon.
+
 ## 2.9.1 (2025-09-22)
 - Restore support for transitioning issue status in Jira API version 2.
 
