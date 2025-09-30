@@ -1,4 +1,7 @@
 # Changelog
+## 2.9.3 (2025-09-30)
+- Automatically convert raw URLs to ADF links in the editor.
+
 ## 2.9.2 (2025-09-30)
 - Allow specialized modes to work with Jira attachments.
 - jira-complete-ask-issue: put default-input before the colon.

@@ -210,6 +210,25 @@
                       st))
   (set-buffer-modified-p nil))
 
+(defun jira-edit--adf-ify-links (text)
+  "Convert raw links in TEXT to ADF format.
+For example, http://example.com becomes [http://example.com|http://example.com].
+It avoids converting links that are already inside square brackets."
+  (with-temp-buffer
+    (insert text)
+    (modify-syntax-entry ?\[ "(")
+    (modify-syntax-entry ?\] ")(")
+    (let ((url-re "\\(https?://[^][ \t\n<>()]+\\)"))
+      (goto-char (point-min))
+      (while (re-search-forward url-re nil t)
+        (let ((is-in-brackets
+               (save-excursion
+                 (goto-char (match-beginning 0))
+                 (ignore-errors (backward-up-list) t))))
+          (unless is-in-brackets
+            (replace-match "[\\&|\\&]" t nil)))))
+    (buffer-string)))
+
 (defun jira-edit-create-editor-buffer
     (buffer-name initial-content save-callback)
   "Create and display an editor buffer with INITIAL-CONTENT and a SAVE-CALLBACK."
@@ -229,7 +248,7 @@
                          (replace-match ""))
                        (string-trim (buffer-string)))))
                 (kill-buffer buf)
-                (funcall save-callback content))))
+                (funcall save-callback (jira-edit--adf-ify-links content)))))
       (display-buffer buf)
       (select-window (get-buffer-window buf)))))
 
