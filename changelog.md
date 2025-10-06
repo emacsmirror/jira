@@ -1,4 +1,7 @@
 # Changelog
+## 2.10.0 (2025-10-06)
+- Add support for tables in comments and issue descriptions
+
 ## 2.9.3 (2025-09-30)
 - Automatically convert raw URLs to ADF links in the editor.
 

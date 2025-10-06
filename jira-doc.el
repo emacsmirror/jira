@@ -196,9 +196,7 @@
          (widths (apply #'cl-mapcar
                         (lambda (&rest col)
                           (apply #'max (mapcar #'length col)))
-                        (if header
-                            (cons header body)
-                          body)))
+                        (if header (cons header body) body)))
          (table (make-vtable :objects body
                              :columns
                              (cl-mapcar (lambda (name width)
@@ -215,10 +213,7 @@
                              ;; columns aren't separated at all on TTY frames?
                              :divider-width (if (display-graphic-p) 0 1)
                              :insert nil)))
-    (concat "\n"
-            (with-temp-buffer
-              (vtable-insert table)
-              (buffer-string)))))
+    (concat "\n" (with-temp-buffer (vtable-insert table) (buffer-string)))))
 
 (defun jira-doc--format-content-block(block)
   "Format content BLOCK to a string."
@@ -627,7 +622,7 @@ NAME should be a username defined in `jira-users'."
          (when cur-table
            (push (jira-doc--build-table (reverse cur-table))
                  res)
-          (setq cur-table nil))
+           (setq cur-table nil))
          (push b res))))
     (when cur-table
       (push (jira-doc--build-table (reverse cur-table))
@@ -636,26 +631,21 @@ NAME should be a username defined in `jira-users'."
 
 (defun jira-doc-build-toplevel-blocks (text)
   "Parse toplevel blocks out of TEXT and convert to ADF nodes."
-  (let ((blocks (jira-doc--split text
-                                 jira-regexp-code-block
-                                 #'jira-doc--build-code-block)))
-    (setq blocks (jira-doc--split blocks
-                                  jira-regexp-blockquote
-                                  #'jira-doc--build-blockquote))
-    (setq blocks (jira-doc--split blocks
-                                  jira-regexp-heading
-                                  #'jira-doc--build-heading))
-    (setq blocks (jira-doc--split blocks
-                                  jira-regexp-hr
-                                  #'jira-doc--build-rule))
-    (setq blocks (jira-doc-build-tables blocks))
-    (setq blocks (jira-doc-build-lists blocks))
+  (let ((blocks
+	 (thread-first
+	   text
+	   (jira-doc--split jira-regexp-code-block #'jira-doc--build-code-block)
+	   (jira-doc--split jira-regexp-blockquote  #'jira-doc--build-blockquote)
+	   (jira-doc--split jira-regexp-heading     #'jira-doc--build-heading)
+	   (jira-doc--split jira-regexp-hr          #'jira-doc--build-rule)
+	   (jira-doc-build-tables)
+	   (jira-doc-build-lists))))
     (mapcar (lambda (s)
-              (if (stringp s)
-                  `(("type" . "paragraph")
-                    ("content" ,@(jira-doc-build-inline-blocks s)))
-                s))
-            blocks)))
+	      (if (stringp s)
+		  `(("type" . "paragraph")
+		    ("content" ,@(jira-doc-build-inline-blocks s)))
+		s))
+	    blocks)))
 
 (defun jira-doc-build-adf (text)
   "Build a Jira document (ADF) from TEXT."

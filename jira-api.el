@@ -285,7 +285,7 @@ CALLBACK is the function to call after the request is done."
 	 :callback (lambda (data response)
                      (setq jira-active-issue-transitions
 			   (funcall extract data response))))
-      (jira-api-call "GET" (format "issue/%s/transitions" (first issue-keys))
+      (jira-api-call "GET" (format "issue/%s/transitions" (cl-first issue-keys))
                      :callback (lambda (data response)
 				 (setq jira-active-issue-transitions
                                        (funcall extract data response)))))))
