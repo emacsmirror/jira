@@ -119,6 +119,8 @@
           ((string= type "inlineCard")
            (let* ((url (alist-get 'url (alist-get 'attrs block))))
              (buttonize url `(lambda (data) (interactive) (browse-url ,url)))))
+          ((string= type "mediaInline")
+           (jira-doc--format-media block))
           ((string= type "mention")
            (jira-doc--format-mention block))
           ((string= type "emoji")
@@ -158,24 +160,27 @@
 
 (defun jira-doc--format-media-block (block)
   "Format BLOCK, a mediaSingle or mediaGroup node, to a string."
-  (let ((media (mapcar (lambda (b)
-                         (let* ((attrs (alist-get 'attrs b))
-                                (type (alist-get 'type attrs))
-                                (id (alist-get 'id attrs))
-                                (collection (alist-get 'collection attrs)))
-                           (if (string= type "link")
-                               (let ((name (alist-get 'alt attrs id))
-                                     (marks (jira-doc--marks block)))
-                                 (jira-fmt-with-marks (concat "<" name ">") marks))
-                             (jira-fmt-placeholder (format "<file:%s%s>"
-                                                           (if (string= "" collection)
-                                                               ""
-                                                             (concat collection ":"))
-                                                           id)))))
+  (let ((media (mapcar #'jira-doc--format-media
                        (alist-get 'content block))))
-  (concat
-   "\n"
-   (string-join media "\n"))))
+    (concat
+     "\n"
+     (string-join media "\n"))))
+
+(defun jira-doc--format-media (block)
+  "Format an individual media node to a string."
+  (let* ((attrs (alist-get 'attrs block))
+         (type (alist-get 'type attrs))
+         (id (alist-get 'id attrs))
+         (collection (alist-get 'collection attrs)))
+    (if (string= type "link")
+        (let ((name (alist-get 'alt attrs id))
+              (marks (jira-doc--marks block)))
+          (jira-fmt-with-marks (concat "<" name ">") marks))
+      (jira-fmt-placeholder (format "<file:%s%s>"
+                                    (if (string= "" collection)
+                                        ""
+                                      (concat collection ":"))
+                                    id)))))
 
 (defun jira-doc--format-table-row (block)
   (mapcar #'jira-doc--format-content-block
