@@ -180,7 +180,7 @@
       (jira-fmt-placeholder
        (format "<file:%s%s>"
                (if (string= "" collection) "" (concat collection ":"))
-               (if (string= "" alt) id alt))))))
+               (if (and alt (not (string= "" alt))) alt id))))))
 
 (defun jira-doc--format-table-row (block)
   (mapcar #'jira-doc--format-content-block
