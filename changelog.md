@@ -1,4 +1,8 @@
 # Changelog
+## 2.10.2 (2025-10-11)
+- Display `mediaInline` nodes as attachments. When user adds a file to a comment, one of
+these mediaInline elements are created.
+
 ## 2.10.1 (2025-10-11)
 - Better Error Handling On `jira-issues--fetch-and-display`.
 It fixes the following problem reported by @Gchouchou:
