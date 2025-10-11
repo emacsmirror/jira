@@ -171,16 +171,16 @@
   (let* ((attrs (alist-get 'attrs block))
          (type (alist-get 'type attrs))
          (id (alist-get 'id attrs))
+	 (alt (alist-get 'alt attrs))
          (collection (alist-get 'collection attrs)))
     (if (string= type "link")
         (let ((name (alist-get 'alt attrs id))
               (marks (jira-doc--marks block)))
           (jira-fmt-with-marks (concat "<" name ">") marks))
-      (jira-fmt-placeholder (format "<file:%s%s>"
-                                    (if (string= "" collection)
-                                        ""
-                                      (concat collection ":"))
-                                    id)))))
+      (jira-fmt-placeholder
+       (format "<file:%s%s>"
+               (if (string= "" collection) "" (concat collection ":"))
+               (if (string= "" alt) id alt))))))
 
 (defun jira-doc--format-table-row (block)
   (mapcar #'jira-doc--format-content-block
