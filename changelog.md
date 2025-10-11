@@ -1,4 +1,19 @@
 # Changelog
+## 2.10.1 (2025-10-11)
+- Better Error Handling On `jira-issues--fetch-and-display`.
+It fixes the following problem reported by @Gchouchou:
+
+```
+I am having issues recovering from errors running jira-issues--fetch-and-display.
+If, say you run with an invalid jql, jira-issues--loading-p would be set to t
+because the callback will never be evaluated to set it back to nil. I tried to see
+if this is a simple fix but it requires some refactoring of jira-api-search to
+customize error handling and make sure we set jira-issues--loading-p back to nil
+after an error. The manual fix is not too hard (just set it to t) but it would
+be greatly helpful to people that do not want to go into the source code and
+wonder issues stopped reloading.
+```
+
 ## 2.10.0 (2025-10-06)
 - Add support for tables in comments and issue descriptions
 

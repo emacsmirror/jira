@@ -125,7 +125,7 @@ For example:
   "Face used for 'Done' status category." :group 'jira)
 
 (defface jira-face-code
-  '((t (:family "Monospace")))
+  '((t (:inherit fixed-pitch)))
   "Face used to show code blocks." :group 'jira)
 
 (defface jira-face-deleted

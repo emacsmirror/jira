@@ -83,7 +83,7 @@ This information is added to worklogs to make it easier to identify")
     (when page-token
       (setq params (append params `(("nextPageToken" . ,page-token)))))
     (when jira-debug (message (concat "Get issues with jql " jql)))
-    (jira-api-search :params params :callback callback)))
+    (jira-api-search :params params :callback callback :errback #'jira-issues--fetch-error)))
 
 (defun jira-issues--api-filters-and (filters)
   "Concat all FILTERS with AND."
@@ -117,6 +117,11 @@ This information is added to worklogs to make it easier to identify")
               (summary (jira-table-extract-field jira-issues-fields :summary issue)))
           (puthash key summary map)))
     map))
+
+(defun jira-issues--fetch-error (&rest _)
+  "Handle fetch errors."
+  (setq jira-issues--loading-p nil)
+  (message "Jira API request failed"))
 
 (defun jira-issues--fetch-and-display (page-token)
   (when (not jira-issues--loading-p)

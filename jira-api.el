@@ -183,10 +183,13 @@ ERROR is a function to call if the request fails."
                   (lambda (&key response error-thrown &allow-other-keys)
                     (jira-api--callback-error-log response error-thrown)))))))
 
-(cl-defun jira-api-search (&key params callback sync)
-  "Perform a JQL search, auto-detecting the correct endpoint."
+(cl-defun jira-api-search (&key params callback sync errback)
+  "Perform a JQL search, auto-detecting the correct endpoint.
+  ;; if we already know the endpoint, we use it directly"
   (if jira-search-endpoint
-      (jira-api-call "GET" jira-search-endpoint :params params :callback callback :sync sync)
+      (jira-api-call
+       "GET" jira-search-endpoint :params params :callback callback :sync sync :error errback)
+    ;; otherwise, we try with `search/jql` first, and if it fails we try with `search`
     (let* ((success-cb
             (cl-function
              (lambda (endpoint)
@@ -194,6 +197,8 @@ ERROR is a function to call if the request fails."
                 (lambda (data response)
                   (setq jira-search-endpoint endpoint)
                   (when callback (funcall callback data response)))))))
+           ;; some old Jira versions does not support the `search/jql` endpoint,
+           ;; so we need to try with `search` if the first one fails with a 404.
            (error-cb
             (cl-function
              (lambda (&key response error-thrown &allow-other-keys)
@@ -201,8 +206,12 @@ ERROR is a function to call if the request fails."
                    (jira-api-call "GET" "search"
                                   :params params
                                   :sync sync
-                                  :callback (funcall success-cb "search"))
-                 (jira-api--callback-error-log response error-thrown))))))
+                                  :callback (funcall success-cb "search")
+                                  :error errback)
+                 ;; if there is another error, we call the errback if it exists
+                 (if errback
+                     (funcall errback :response response :error-thrown error-thrown)
+                   (jira-api--callback-error-log response error-thrown)))))))
       (jira-api-call "GET" "search/jql"
                      :params params
                      :sync sync
