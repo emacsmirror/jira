@@ -448,11 +448,18 @@
 (defun jira-detail--ensure-update-metadata ()
   ;; Ensure jira-detail--current-update-metadata is populated and return it.
   (unless jira-detail--current-update-metadata
-    (setq jira-detail--current-update-metadata
-          (jira-api-get-create-metadata
-           (jira-detail--project-key)
-           (jira-table-extract-field jira-issues-fields :issue-type-id jira-detail--current)
-           :sync t)))
+    (let* ((issue-type-id (jira-table-extract-field
+			   jira-issues-fields
+			   :issue-type-id jira-detail--current)))
+      (if (null issue-type-id)
+          (progn
+	    (message "Warning: No issue type ID found for current issue")
+	    (setq jira-detail--current-update-metadata nil))
+        (setq jira-detail--current-update-metadata
+              (jira-api-get-create-metadata
+               (jira-detail--project-key)
+               issue-type-id
+               :sync t)))))
   jira-detail--current-update-metadata)
 
 (defun jira-detail--updatable-field-id (field-name)
@@ -583,7 +590,7 @@
  choose one if there are multiple options."
   (let* ((project (jira-detail--project-key))
          (response (jira-api-get-project-issue-types project :sync t))
-         (types (alist-get 'issuetypes (aref (alist-get 'projects response) 0)))
+         (types (alist-get 'issueTypes response))
          (subtasks-types
           (cl-remove-if-not (lambda (item) (eq (cdr (assoc 'subtask item)) t))
 			    (append types nil))))

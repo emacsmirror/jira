@@ -1,4 +1,10 @@
 # Changelog
+## 2.10.3 (2025-10-25)
+- Fix JIRA API deprecation issue #46. Replace deprecated
+  `issue/createmeta/?projectKeys=%s` endpoint with `issue/createmeta/%s/issuetypes` to
+  restore subtask creation functionality.
+- Add validation to prevent 400 errors when issue type ID is missing.
+
 ## 2.10.2 (2025-10-11)
 - Display `mediaInline` nodes as attachments. When user adds a file to a comment, one of
 these mediaInline elements are created.
