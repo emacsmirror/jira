@@ -153,7 +153,7 @@ This information is added to worklogs to make it easier to identify")
          (next-token (cdr (assoc 'nextPageToken data))))
     (setq jira-issues--pagination-next next-token)
     (when jira-debug
-      (message "Jira IssueS: Page %d" (1+ (length jira-issues--pagination-previous))))
+      (message "Jira Issues: Page %d" (1+ (length jira-issues--pagination-previous))))
     (setq tabulated-list-entries (mapcar #'jira-issues--data-format-issue issues))
     (setq jira-issues-key-summary-map (jira-issues-store-issues-info issues))
     (tabulated-list-print t)
