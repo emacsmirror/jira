@@ -427,6 +427,17 @@ and making the request synchronous if SYNC."
 	 (response (jira-api-call "GET" url :callback callback :sync sync)))
     (when sync (request-response-data response))))
 
+(cl-defun jira-api-get-linked-issues (issue-key &key callback sync)
+  "Get linked issues for ISSUE-KEY.
+
+CALLBACK is the function to call after the request is done.
+SYNC determines if the request should be synchronous."
+  (jira-api-call "GET"
+                 (format "issue/%s" issue-key)
+                 :params `(("fields" . "issuelinks"))
+                 :callback callback
+                 :sync sync))
+
 (cl-defun jira-api-get-basic-data (&key force)
   "Get some basic data (custom fields, projects, statuses, etc) from JIRA API.
 

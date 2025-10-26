@@ -1,4 +1,7 @@
 # Changelog
+## 2.11.0 (2025-10-26)
+- Show linked inssues in in Jira Detail view.
+
 ## 2.10.3 (2025-10-25)
 - Fix JIRA API deprecation issue #46. Replace deprecated
   `issue/createmeta/?projectKeys=%s` endpoint with `issue/createmeta/%s/issuetypes` to

@@ -272,6 +272,16 @@ Extracts name from the status object."
   "Extract a list of business lines from VALUE."
   (if (jira-fmt--alist-p value) (cdr (assoc 'value value)) ""))
 
+(defun jira-fmt-issuelinks (links)
+  "Format issuelinks for display.
+Optimized to avoid traversing the entire list when only count is needed."
+  (cond
+   ((not links) "No linked issues")
+   ((not (listp links)) "Invalid links data")
+   ((= (length links) 0) "No linked issues")
+   ((= (length links) 1) "1 linked issue")
+   (t (format "%d linked issues" (length links)))))
+
 (defun jira-fmt-issue-type-name (value)
   "Format issue type VALUE."
   (if (and (stringp value) (not (string-empty-p value)))

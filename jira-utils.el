@@ -149,7 +149,11 @@
                      (:formatter . jira-fmt-cost-center)))
     (:resolution . ((:path . (fields resolution name))
                     (:columns . 10)
-                    (:name . "Resolution")))))
+                    (:name . "Resolution")))
+    (:issuelinks . ((:path . (fields issuelinks))
+                   (:columns . 15)
+                   (:name . "Linked Issues")
+                   (:formatter . jira-fmt-issuelinks)))))
 
 (defun jira-utils-marked-items ()
   "Return the marked items in the current tablist"

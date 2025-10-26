@@ -181,7 +181,7 @@
 
 (cl-defun jira-detail--issue (key issue)
   "Show the detailed information of the ISSUE with KEY."
-  (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+  (with-current-buffer (jira-detail--get-issue-buffer key)
     (jira-detail)
     (setq jira-detail--current-key key)
     (setq jira-detail--current issue)
@@ -227,6 +227,7 @@
             (insert "\n\n")))))
     (jira-detail--show-attachments key issue)
     (jira-detail--show-subtasks key issue)
+    (jira-detail--show-linked-issues key issue)
     (jira-detail--show-other key)
     (pop-to-buffer (current-buffer))))
 
@@ -259,7 +260,7 @@
 
 (defun jira-detail--comments (key comments)
   "Format and insert COMMENTS from issue KEY."
-  (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+  (with-current-buffer (jira-detail--get-issue-buffer key)
     (let ((inhibit-read-only t))
       (goto-char (point-max))
       (magit-insert-section (jira-issue-comments nil nil)
@@ -291,7 +292,7 @@
   (let* ((fields (alist-get 'fields issue))
          (subtasks (alist-get 'subtasks fields)))
     (when (and subtasks (sequencep subtasks) (> (length subtasks) 0))
-      (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+      (with-current-buffer (jira-detail--get-issue-buffer key)
         (let ((inhibit-read-only t))
           (goto-char (point-max))
           (magit-insert-section (jira-issue-subtasks nil nil)
@@ -299,16 +300,64 @@
               (magit-insert-heading "🔗 Subtasks")
               (magit-insert-section-body
 		(seq-doseq (subtask subtasks)
-                  (let* ((subtask-key (alist-get 'key subtask))
-			 (subtask-fields (alist-get 'fields subtask))
-			 (subtask-summary (alist-get 'summary subtask-fields))
-			 (subtask-status (alist-get 'status subtask-fields)))
-                    (when (and (stringp subtask-key) (stringp subtask-summary))
-                      (insert (format " - %s  %s %s\n"
-				      (jira-fmt-issue-key-not-tabulated subtask-key)
-				      (jira-fmt-issue-status subtask-status)
-                                      subtask-summary))))))
+                  (jira-detail--format-issue-entry subtask)))
               (insert "\n"))))))))
+
+(defun jira-detail--get-issue-buffer (key)
+  "Get or create the Jira issue detail buffer for KEY."
+  (get-buffer-create (concat "*Jira Issue Detail: [" key "]*")))
+
+(defun jira-detail--process-link (link)
+  "Process a single LINK and return (issue direction link-type) tuple."
+  (let* ((link-type (alist-get 'type link))
+         (outward-issue (alist-get 'outwardIssue link))
+         (inward-issue (alist-get 'inwardIssue link)))
+    (cond
+     (outward-issue (list outward-issue "outward" link-type))
+     (inward-issue (list inward-issue "inward" link-type)))))
+
+(defun jira-detail--show-linked-issues (key issue)
+  "Display linked issues for ISSUE with key KEY."
+  (let* ((fields (alist-get 'fields issue))
+         (issuelinks (alist-get 'issuelinks fields)))
+    (when (and issuelinks (sequencep issuelinks) (> (length issuelinks) 0))
+      (with-current-buffer (jira-detail--get-issue-buffer key)
+        (let ((inhibit-read-only t))
+          (goto-char (point-max))
+          (magit-insert-section (jira-issue-linked-issues nil nil)
+            (magit-insert-section (linked-issues-list nil nil)
+              (magit-insert-heading "🔗 Linked Issues")
+              (magit-insert-section-body
+                (seq-doseq (link issuelinks)
+                  (let* ((processed (jira-detail--process-link link))
+                         (issue (car processed))
+                         (direction (cadr processed))
+                         (link-type (caddr processed)))
+                    (when issue
+                      (jira-detail--format-linked-issue issue link-type direction)))))
+              (insert "\n"))))))))
+
+(defun jira-detail--format-issue-entry (issue &optional link-text)
+  "Format a single ISSUE entry, optionally with LINK-TEXT for linked issues.
+This is a shared function used by both subtasks and linked issues."
+  (let* ((issue-key (alist-get 'key issue))
+         (issue-fields (alist-get 'fields issue))
+         (issue-summary (alist-get 'summary issue-fields))
+         (issue-status (alist-get 'status issue-fields)))
+    (if (and (stringp issue-key) (stringp issue-summary))
+        (insert (format " - %s %s %s %s\n"
+                        (if link-text (concat "[" link-text "]") "")
+                        (jira-fmt-issue-key-not-tabulated issue-key)
+                        (jira-fmt-issue-status issue-status)
+                        issue-summary))
+      (insert (format " - [Invalid issue data: %s]\n" issue-key)))))
+
+(defun jira-detail--format-linked-issue (issue link-type direction)
+  "Format a single linked ISSUE with LINK-TYPE and DIRECTION."
+  (let* ((link-text (if (string= direction "outward")
+                        (alist-get 'outward link-type)
+                      (alist-get 'inward link-type))))
+    (jira-detail--format-issue-entry issue (or link-text "[Unknown link type]"))))
 
 (defvar-keymap jira-attachment-section-map
   :doc "Keymap for Jira attachment sections."
@@ -322,7 +371,7 @@
   (let* ((fields (alist-get 'fields issue))
          (attachments (alist-get 'attachment fields)))
     (when (> (length attachments) 0)
-      (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+      (with-current-buffer (jira-detail--get-issue-buffer key)
 	(let ((inhibit-read-only t))
           (goto-char (point-max))
           (magit-insert-section (jira-issue-attachments nil nil)
@@ -382,7 +431,7 @@
    key
    (lambda (data _response)
      (jira-detail--show-comments key)
-     (with-current-buffer (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))
+     (with-current-buffer (jira-detail--get-issue-buffer key)
        (let ((inhibit-read-only t)
              (names (mapcar (lambda (u)
                               (alist-get 'displayName u))
