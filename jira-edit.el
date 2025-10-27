@@ -82,10 +82,13 @@
   (rx bol
       (submatch
        (submatch-n 2 "|" (? "|"))
-       (+ (+? (intersection (not "|") not-newline))
+       ;; Emacs 29 rx.el doesn't accept:
+       ;; (intersection (not "|") not-newline)
+       ;; so we use the equivalent literal.
+       (+ (+? (regexp "[^\r\n|]"))
           (backref 2))
-      (* not-newline)
-      eol)))
+       (* not-newline))
+      eol))
 
 (defconst jira-regexp-hr
   (rx bol "----"))
