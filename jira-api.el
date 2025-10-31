@@ -86,7 +86,7 @@ Each URL should be a complete Jira URL like: https://acme.atlassian.net"
 (defvar jira-filters nil "Jira user filters.")
 (defvar jira-projects nil "Jira projects (5 most recent).")
 (defvar jira-projects-versions nil "Jira project versions (releases).")
-(defvar jira-search-endpoint nil "Cached search endpoint: 'search' or 'search/jql'.")
+(defvar jira-search-endpoint nil "Cached search endpoint: \\='search\\=' or \\='search/jql\\='.")
 
 (defvar jira-current-url nil "Currently active Jira URL for multi-instance support.")
 
@@ -338,7 +338,7 @@ CALLBACK is the function to call after the request is done."
     (if bulk
 	(jira-api-call
 	 "GET" "bulk/issues/transition"
-	 :params `(("issueIdsOrKeys" . ,(mapconcat 'identity issue-keys ",")))
+	 :params `(("issueIdsOrKeys" . ,(mapconcat #'identity issue-keys ",")))
 	 :callback (lambda (data response)
                      (setq jira-active-issue-transitions
 			   (funcall extract data response))))
@@ -450,7 +450,7 @@ If FORCE is non-nil, re-fetches the user list.
                        (maxResults . ,jira-users-max-results))
                      :callback
                      (lambda (data _response)
-                       (mapc #'(lambda (u)
+                       (mapc (lambda (u)
                                  (let ((id (alist-get 'accountId u))
                                        (name (alist-get 'displayName u)))
                                    (unless (eq :json-false (alist-get 'active u))

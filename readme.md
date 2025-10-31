@@ -157,7 +157,7 @@ week.
 - ❓ **Does it work with my old on-premise instance?**
 
 	I try to provide support as much as possible, but I don’t have access to this kind of
-	JIRA installation, so I rely on the official documentation and user PRs and issues..
+	JIRA installation, so I rely on the official documentation and user PRs and issues.
 	If you’re using API version 2, make sure to set `jira-api-version` (see the
 	**Customization** section). Version `v2.8.2` fixes an issue with older on-premise
 	instances related to the endpoint that lists issues. I’m also working on making issue

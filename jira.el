@@ -34,7 +34,7 @@
 (require 'jira-issues)
 (require 'jira-tempo)
 
-(defconst jira-version "jira.el v2.12.0" "jira.el package version.")
+(defconst jira-version "jira.el v2.12.0" "Jira.el package version.")
 
 (provide 'jira)
 

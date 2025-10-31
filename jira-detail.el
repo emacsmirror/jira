@@ -378,7 +378,7 @@ This is a shared function used by both subtasks and linked issues."
 	    (magit-insert-section (attachements-list nil nil)
               (magit-insert-heading "📎 Attachments (press RET to visualize)")
               (magit-insert-section-body
-		(mapcar
+		(mapc
 		 (lambda (attachment)
 		   (let* ((url (url-generic-parse-url (alist-get 'content attachment)))
                           ;; FIXME: verify that filename matches
@@ -468,8 +468,7 @@ This is a shared function used by both subtasks and linked issues."
                 (jira-actions-delete-comment
 		 jira-detail--current-key
                  comment-id
-		 (lambda () (jira-detail-show-issue jira-detail--current-key))))
-	      )
+		 (lambda () (jira-detail-show-issue jira-detail--current-key)))))
 	  (message "No comment at point"))
       (message "No comment at point"))))
 
@@ -571,7 +570,7 @@ This is a shared function used by both subtasks and linked issues."
     (lambda () (interactive ) (jira-detail--remove-comment-at-point)))]
   ["Issue Actions"
    ("C" "Change issue status"
-    (lambda () (interactive) (jira-actions-change-issue-menu)))
+    (lambda () (interactive) (call-interactively 'jira-actions-change-issue-menu)))
    ("O" "Open issue in browser"
     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
    ("P" "Show parent issue" (lambda () (interactive) (jira-detail--show-parent-issue)))
@@ -600,7 +599,7 @@ This is a shared function used by both subtasks and linked issues."
 		  (interactive) (jira-detail--remove-comment-at-point)))
     (define-key map (kbd "C")
 		(lambda () "Change issue status"
-		  (interactive) (jira-actions-change-issue-menu)))
+		  (interactive) (call-interactively 'jira-actions-change-issue-menu)))
     (define-key map (kbd "O")
 		(lambda () "Open issue in browser"
 		  (interactive)  (jira-actions-open-issue jira-detail--current-key)))

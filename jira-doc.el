@@ -367,7 +367,7 @@ which do not match are returned as-is."
 (defun jira-doc--build-marked-text (text)
   "Split TEXT into a list of ADF text nodes with marks."
   (let* ((mark-regexp (concat "\\_<\\("
-                              (string-join (mapcar #'(lambda (d)
+                              (string-join (mapcar (lambda (d)
                                                        (let ((delim (regexp-quote (car d))))
                                                          (concat delim ".+?" delim)))
                                                    jira-doc--marks-delimiters)
@@ -375,11 +375,11 @@ which do not match are returned as-is."
                               "\\)\\_>"))
          (areas (jira-doc--split (list text)
                                  mark-regexp
-                                 #'(lambda (s)
+                                 (lambda (s)
                                      (pcase (jira-doc--collect-marks s)
                                        (`(,body ,marks)
                                         (jira-doc--build-text body marks)))))))
-    (mapcar #'(lambda (s)
+    (mapcar (lambda (s)
                 (if (stringp s)
                     (jira-doc--build-text s)
                   s))
@@ -484,7 +484,7 @@ NAME should be a username defined in `jira-users'."
     ;; inside table cells. So instead we just scan for inline blocks,
     ;; whick can all be written inside table markup.
     `(("type" . "tableRow")
-      ("content" . ,(mapcar #'(lambda (text)
+      ("content" . ,(mapcar (lambda (text)
                                 `(("type" . ,cell-type)
                                   ("content" .
                                    ((("type" . "paragraph")
@@ -527,7 +527,7 @@ NAME should be a username defined in `jira-users'."
   ;; mark list items: depth, ordered?, text
   (let* ((b* (jira-doc--split (list block)
                               jira-regexp-list-item
-                              #'(lambda (prefix text)
+                              (lambda (prefix text)
                                   `(list-item ,(length prefix)
                                               ,(eq (aref prefix (1- (length prefix)))
                                                    ?#)
@@ -537,7 +537,7 @@ NAME should be a username defined in `jira-users'."
          (stack '())
          (cur '())
          (ordered-p nil)
-         (finish-list #'(lambda ()
+         (finish-list (lambda ()
                           "Create the list node for CUR and put it where it belongs."
                           (when cur
                             (let ((l (jira-doc--build-list (reverse cur)
@@ -550,7 +550,7 @@ NAME should be a username defined in `jira-users'."
                                     (setf (alist-get "content" parent nil nil #'equal)
                                           (append (alist-get "content" parent nil nil #'equal)
                                                   (list l))))))))))
-         (pop-lists #'(lambda (n)
+         (pop-lists (lambda (n)
                         "Finish N lists on STACK."
                         (dotimes (_ n)
                           (funcall finish-list)

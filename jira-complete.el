@@ -144,7 +144,7 @@
 	 (msg (format "Find options for field [%s]. Write something and press RET: " fname))
          (query (if ask-query (read-string msg) ""))
          (values (jira-complete--autocomplete-options url query))
-         (choices (mapcar 'jira-complete--allowed-value-choices values)))
+         (choices (mapcar #'jira-complete--allowed-value-choices values)))
     (if (seq-empty-p choices)
         (message "No values found for %s" fname)
       (if is-array
@@ -177,15 +177,15 @@
              (time (org-read-date with-time-p t)))
         (when time
           (if with-time-p
-              (format-time-string "%Y-%m-%dT%H:%M:%S.000+0000" time)
-            (format-time-string "%Y-%m-%d" time)))))
+              (format-time-string "%FT%T.000+0000" time)
+            (format-time-string "%F" time)))))
      ((and (string= schema-type "issuelink") (or (not values) (seq-empty-p values)))
       (let ((issue-key (read-string (format "Enter issue key for %s: " fname))))
         (when (and issue-key (not (string-empty-p issue-key)))
           `((key . ,issue-key)))))
      ((and values (not (seq-empty-p values)))
       ;; extract the id and name of the field
-      (let* ((choices (mapcar 'jira-complete--allowed-value-choices values)))
+      (let* ((choices (mapcar #'jira-complete--allowed-value-choices values)))
         (if is-array
             (let ((selected
                    (completing-read-multiple
@@ -203,15 +203,13 @@
 from the METADATA provided by the API.
 
 If project-key or parent-key are provided, they will be used to automatically
-fill the 'project' and 'parent' fields."
+fill the \\='project\\=' and \\='parent\\=' fields."
   (let* ((fields (alist-get 'fields metadata))
 	 (required-fields
 	  (seq-filter (lambda (field)
 			(and (eq (alist-get 'required field) t)
 			     (not (eq (alist-get 'hasDefaultValue field) t))))
 		      fields))
-	 (pending-ields
-	  (seq-filter (lambda (field) (jira-complete--is-allowed field)) fields))
 	 (required-fields-keys
 	  (mapcar (lambda (field) (alist-get 'key field)) required-fields))
 	 (field-values
@@ -236,7 +234,7 @@ fill the 'project' and 'parent' fields."
   (jira-api-get-create-metadata
    project-key issue-type-id
    :callback
-   (lambda (data response)
+   (lambda (data _response)
      (jira-complete--issue-from-metadata
       data
       :issue-type issue-type-id

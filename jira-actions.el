@@ -106,9 +106,9 @@
          (status-id (cdr (assoc status jira-active-issue-transitions)))
          (time-estimate (transient-arg-value "--remaining-time-estimate=" args))
 	 (hook-fn (lambda ()
-		    (cond ((eq major-mode 'jira-issues-mode)
+		    (cond ((derived-mode-p 'jira-issues-mode)
 			   (run-hooks 'jira-issues-changed-hook))
-			  ((eq major-mode 'jira-detail-mode)
+			  ((derived-mode-p 'jira-detail-mode)
 			   (run-hooks 'jira-detail-changed-hook)))))
          (hook (if bulk
 		   ;; bulk status change API is asynchronous, so we

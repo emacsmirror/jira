@@ -44,8 +44,8 @@
     :progress-percent :work-ratio :remaining-time :summary)
   "Fields to show in the Jira issues table.
 
-Allowed values in variable jira-issues-fields."
-  :group 'jira :type 'list)
+Allowed values in variable `jira-issues-fields'."
+  :group 'jira :type '(repeat (symbol :tag "Field")))
 
 (defcustom jira-issues-max-results 30
   "Maximum number of Jira issues to retrieve."
@@ -72,7 +72,9 @@ Allowed values in variable jira-issues-fields."
 This information is added to worklogs to make it easier to identify")
 
 (defun jira-issues--api-get-issues (jql callback &optional page-token)
-  "Retrieve issues from the given JQL filter and call CALLBACK function."
+  "Retrieve issues from the given JQL filter and call CALLBACK function.
+
+PAGE-TOKEN is optional and used for pagination."
   (let* ((parent (lambda (fd) (jira-table-field-parent jira-issues-fields fd)))
          (fields (append (mapcar parent jira-issues-table-fields)
 			 jira-issues-required-fields))
@@ -124,6 +126,7 @@ This information is added to worklogs to make it easier to identify")
   (message "Jira API request failed"))
 
 (defun jira-issues--fetch-and-display (page-token)
+  "Fetch and display issues for the given PAGE-TOKEN."
   (when (not jira-issues--loading-p)
     (setq jira-issues--loading-p t)
     (setq jira-issues--pagination-current page-token)
@@ -257,7 +260,7 @@ This information is added to worklogs to make it easier to identify")
     ("f" "Filter" "--filter="
      :transient transient--do-call
      :choices
-     (lambda () (if jira-filters (mapcar 'car jira-filters) (message "No filters found"))))
+     (lambda () (if jira-filters (mapcar #'car jira-filters) (message "No filters found"))))
     ("j""JQL filter" "--jql="
      :transient transient--do-call)
     ("v" "Fix Versions" "--version="

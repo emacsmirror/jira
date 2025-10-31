@@ -24,7 +24,8 @@
 ;;; Commentary:
 
 ;; Edit comments/descriptions with font-lock support.
-;; Markup taken from https://jira.atlassian.com/secure/WikiRendererHelpAction.jspa?section=all
+;; Markup taken from:
+;; https://jira.atlassian.com/secure/WikiRendererHelpAction.jspa?section=all
 
 ;;; Code:
 (eval-when-compile
@@ -199,10 +200,10 @@
   (interactive)
   (pcase (jira-users-read-user "Mention user: ")
     (`(,name ,_id)
-     (insert (concat "[~" name "]")))))
+     (insert "[~" name "]"))))
 
 (defvar-keymap jira-edit-mode-map
-  "C-c C-c" #'(lambda ()
+  "C-c C-c" (lambda ()
                 "Send the buffer contents to Jira."
                 (interactive)
                 (funcall jira-edit--callback))
@@ -215,7 +216,7 @@
   (setq font-lock-defaults '(jira-font-lock-keywords))
   (setq-local font-lock-multiline t)
   (add-hook 'font-lock-extend-region-functions
-            'jira-edit-font-lock-extend-region)
+            #'jira-edit-font-lock-extend-region)
   (set-syntax-table (let ((st (make-syntax-table)))
                       (modify-syntax-entry ?+ "w" st)
                       (modify-syntax-entry ?* "w" st)

@@ -44,11 +44,10 @@ colors can be controlled by customizing faces in the `jira' group."
   :group 'jira)
 
 (defcustom jira-status-faces nil
-  "Alist mapping specific status names (not categories) to faces
-to override default styling.
+  "Alist mapping specific status names (not categories) to faces to override default styling.
 For example:
-  '((\"In Review\" . 'my-custom-review-face)
-    (\"Blocked\" . 'error))"
+  \\='((\"In Review\" . my-custom-review-face)
+    (\"Blocked\" . error))"
   :type '(alist :key-type string :value-type face)
   :group 'jira)
 
@@ -114,15 +113,15 @@ For example:
 
 (defface jira-face-status-todo
   '((t (:foreground "#fff" :background "#AA7777")))
-  "Face used for 'To Do' status category." :group 'jira)
+  "Face used for \\='To Do\\=' status category." :group 'jira)
 
 (defface jira-face-status-inprogress
   '((t (:foreground "#fff" :background "#7777AA")))
-  "Face used for 'In Progress' status category." :group 'jira)
+  "Face used for \\='In Progress\\=' status category." :group 'jira)
 
 (defface jira-face-status-done
   '((t (:foreground "#fff" :background "#77AA77")))
-  "Face used for 'Done' status category." :group 'jira)
+  "Face used for \\='Done\\=' status category." :group 'jira)
 
 (defface jira-face-code
   '((t (:inherit fixed-pitch)))
