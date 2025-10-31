@@ -283,6 +283,14 @@ This information is added to worklogs to make it easier to identify")
   (kill-buffer (buffer-name))
   (jira-tempo))
 
+(defun jira-issues--switch-host-and-refresh ()
+  "Switch JIRA host and refresh the issue list."
+  (interactive)
+  (let ((selected-host (completing-read "JIRA host: " (jira-api--available-urls))))
+    (jira-api--set-current-url selected-host)
+    (jira-api-get-basic-data)
+    (tablist-revert)))
+
 (transient-define-prefix jira-issues-actions-menu ()
   "Show menu for actions on Jira Issues."
   [[:description "Jira Issues List"
@@ -293,6 +301,7 @@ This information is added to worklogs to make it easier to identify")
 		  (lambda () (interactive) (jira-detail-find-issue-by-key)))
 		 ("T" "Jump to Tempo worklogs"
 		  (lambda () (interactive) (jira-issues--jump-to-tempo)))
+		 ("H" "Switch JIRA host" jira-issues--switch-host-and-refresh)
                  ("M-n" "Next page" jira-issues-next-page)
                  ("M-p" "Previous page" jira-issues-previous-page)]]
   [[:description
@@ -317,6 +326,7 @@ This information is added to worklogs to make it easier to identify")
   (let ((map (make-sparse-keymap)))
     (define-key map "?" 'jira-issues-actions-menu)
     (define-key map "l" 'jira-issues-menu)
+    (define-key map "H" 'jira-issues--switch-host-and-refresh)
     (define-key map "T" (lambda () (interactive) (jira-issues--jump-to-tempo)))
     (define-key map "f" (lambda () (interactive) (jira-detail-find-issue-by-key)))
     (define-key map (kbd "c")
@@ -339,6 +349,7 @@ This information is added to worklogs to make it easier to identify")
   (interactive)
   (switch-to-buffer "*Jira Issues*")
   (jira-issues-mode)
+  (jira-api--initialize-current-url)
   (jira-api-get-basic-data)
   (tablist-revert))
 

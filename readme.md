@@ -125,6 +125,9 @@ You can also install it using
 	(setq jira-token-is-personal-access-token t)
 	```
 
+🌐 For multiple Jira hosts, add entries for each host in your auth-source file and
+configure `jira-secondary-urls`. Press `H` in the issues list to switch between hosts.
+
 ## Quickstart
 Use `M-x jira-issues` to check the list of issues assigned to the
 configured user for the active sprint. Once the list is loaded, press

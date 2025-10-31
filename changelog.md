@@ -1,4 +1,8 @@
 # Changelog
+## 2.12.0 (2025-10-31)
+- Add multi-host support: Press `H` to switch between Jira instances
+- Configure secondary hosts with `jira-secondary-urls`
+
 ## 2.11.0 (2025-10-26)
 - Show linked inssues in in Jira Detail view.
 

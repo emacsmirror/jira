@@ -39,8 +39,13 @@
   :group 'jira :type 'string)
 
 (defcustom jira-base-url ""
-  "Jira instance URL, like: https://acme.atlassian.net."
+  "Jira instance URL, like: https://acme.atlassian.net"
   :group 'jira :type 'string)
+
+(defcustom jira-secondary-urls nil
+  "List of secondary Jira instance URLs for multi-instance support.
+Each URL should be a complete Jira URL like: https://acme.atlassian.net"
+  :group 'jira :type '(repeat string))
 
 (defcustom jira-api-version 3
   "Jira API version (Versions 2 or 3 are allowed)."
@@ -83,19 +88,23 @@
 (defvar jira-projects-versions nil "Jira project versions (releases).")
 (defvar jira-search-endpoint nil "Cached search endpoint: 'search' or 'search/jql'.")
 
-(defun jira-api--username (host)
-  "Retrieve the username for HOST from config or auth-source."
+(defvar jira-current-url nil "Currently active Jira URL for multi-instance support.")
+
+(defun jira-api--username ()
+  "Retrieve the username for current JIRA URL from config or auth-source."
   (if (and jira-username (not (string= "" jira-username)))
       jira-username
-      (let* ((auth-host (replace-regexp-in-string "https://" "" host))
+      (let* ((current-url (jira-api--get-current-url))
+             (auth-host (replace-regexp-in-string "https://" "" current-url))
 	     (auth-info (car (auth-source-search :host auth-host :require '(:user)))))
 	(when auth-info (plist-get auth-info :user)))))
 
-(defun jira-api--token (host)
-  "Retrieve the token for HOST from config or auth-source."
+(defun jira-api--token ()
+  "Retrieve the token for current JIRA URL from config or auth-source."
   (if (and jira-token (not (string= "" jira-token)))
       jira-token
-      (let* ((auth-host (replace-regexp-in-string "https://" "" host))
+      (let* ((current-url (jira-api--get-current-url))
+             (auth-host (replace-regexp-in-string "https://" "" current-url))
 	     (auth-info (car (auth-source-search :host auth-host :require '(:secret)))))
 	(when auth-info (funcall (plist-get auth-info :secret))))))
 
@@ -115,6 +124,44 @@
 (defun jira-api--tempo-auth-header (token)
   "Generate the Authorization header for Jira Tempo API requests with TOKEN."
   (format "Bearer %s" token))
+
+(defun jira-api--available-urls ()
+  "Return list of available JIRA hosts for completion."
+  (if jira-secondary-urls
+      (cons jira-base-url jira-secondary-urls)
+    (list jira-base-url)))
+
+(defun jira-api--set-current-url (url)
+  "Set the currently active Jira host to URL and clear cached data."
+  (interactive (list (completing-read "JIRA host: " (jira-api--available-urls))))
+  (when (and url (not (string-empty-p url)))
+    (setq jira-current-url url)
+    (jira-api--clear-cache)
+    (message "Switched to JIRA host: %s" url)))
+
+(defun jira-api--get-current-url ()
+  "Get the currently active JIRA URL, falling back to base URL if not set."
+  (or jira-current-url jira-base-url))
+
+(defun jira-api--clear-cache ()
+  "Clear all cached JIRA data for URL switching."
+  (interactive)
+  (setq jira-users nil
+        jira-account-id nil
+        jira-fields nil
+        jira-active-issue-transitions nil
+        jira-statuses nil
+        jira-resolutions nil
+        jira-filters nil
+        jira-projects nil
+        jira-projects-versions nil
+        jira-search-endpoint nil))
+
+(defun jira-api--initialize-current-url ()
+  "Initialize URL system for backward compatibility.
+Ensure secondary URLs list exists for completion."
+  (unless jira-secondary-urls
+    (setq jira-secondary-urls '())))
 
 (defun jira-api--url (base-url endpoint)
   "Generate the full API url from BASE-URL and the given ENDPOINT"
@@ -153,35 +200,36 @@ synchronous or not. If SYNC is non-nil, the request will block
 until it completes, otherwise it will be asynchronous.
 
 ERROR is a function to call if the request fails."
-  (message "[Jira API Call]: %s %s" verb endpoint)
-  (when (and jira-debug data)
-    (message "[Jira API Call Data]: %s" (json-encode data)))
-  (when (and jira-debug params)
-    (message "[Jira API Call Params]: %s" params))
-  (let* ((username (jira-api--username jira-base-url))
-	 (token (jira-api--token jira-base-url))
-	 (auth (jira-api--auth-header username token))
-	 (callback (cl-function
-		    (lambda (&key data response &allow-other-keys)
-		      (when jira-debug
-			(jira-api--callback-success-log data response))
-		      (when callback
-			(funcall callback data response))))))
-    (if (not auth) (message "[Jira API Error]: Authorization data not found"))
-    (if jira-debug (message "[Jira API Call]: Authorization %s: " auth))
-    (request
-      (jira-api--url jira-base-url endpoint)
-      :type verb
-      :headers `(("Authorization" . ,auth) ("Content-Type" . "application/json"))
-      :sync sync
-      :params (or params '())
-      :data (if data (json-encode data) nil)
-      :parser (or parser 'json-read)
-      :success callback
-      :error (or error
-                 (cl-function
-                  (lambda (&key response error-thrown &allow-other-keys)
-                    (jira-api--callback-error-log response error-thrown)))))))
+  (let ((current-url (jira-api--get-current-url)))
+    (message "[Jira API Call]: %s %s (URL: %s)" verb endpoint current-url)
+    (when (and jira-debug data)
+      (message "[Jira API Call Data]: %s" (json-encode data)))
+    (when (and jira-debug params)
+      (message "[Jira API Call Params]: %s" params))
+    (let* ((username (jira-api--username))
+	   (token (jira-api--token))
+	   (auth (jira-api--auth-header username token))
+	   (callback (cl-function
+		      (lambda (&key data response &allow-other-keys)
+			(when jira-debug
+			  (jira-api--callback-success-log data response))
+			(when callback
+			  (funcall callback data response))))))
+      (if (not auth) (message "[Jira API Error]: Authorization data not found"))
+      (if jira-debug (message "[Jira API Call]: Authorization %s: " auth))
+      (request
+	(jira-api--url current-url endpoint)
+	:type verb
+	:headers `(("Authorization" . ,auth) ("Content-Type" . "application/json"))
+	:sync sync
+	:params (or params '())
+	:data (if data (json-encode data) nil)
+	:parser (or parser 'json-read)
+	:success callback
+	:error (or error
+		   (cl-function
+		    (lambda (&key response error-thrown &allow-other-keys)
+		      (jira-api--callback-error-log response error-thrown))))))))
 
 (cl-defun jira-api-search (&key params callback sync errback)
   "Perform a JQL search, auto-detecting the correct endpoint.
