@@ -44,7 +44,8 @@ colors can be controlled by customizing faces in the `jira' group."
   :group 'jira)
 
 (defcustom jira-status-faces nil
-  "Alist mapping specific status names (not categories) to faces to override default styling.
+  "Alist mapping specific status names (not categories) to faces to override
+default styling.
 For example:
   \\='((\"In Review\" . my-custom-review-face)
     (\"Blocked\" . error))"
@@ -142,6 +143,8 @@ For example:
   "Face used to show Jira nodes that we don't actually display.")
 
 (defun jira-fmt--alist-p (value)
+  "Return non-nil if VALUE is an alist.
+An alist is a list where each element is a cons cell."
   (and value (listp value) (or (null value) (consp (car value)))))
 
 (defun jira-fmt--link-action (button)
@@ -149,7 +152,7 @@ For example:
   (browse-url (button-get button 'href)))
 
 (defun jira-fmt-set-face (value face)
-  "Propertize VALUE with the given FACE"
+  "Propertize VALUE with the given FACE."
   ;; faces are not shown in jira-detail if we don´t set
   ;; font-lock-face too
   (let* ((with-face (propertize value  'face face)))
@@ -273,7 +276,8 @@ Extracts name from the status object."
 
 (defun jira-fmt-issuelinks (links)
   "Format issuelinks for display.
-Optimized to avoid traversing the entire list when only count is needed."
+Optimized to avoid traversing the entire list when only count is needed.
+Format LINKS for display."
   (cond
    ((not links) "No linked issues")
    ((not (listp links)) "Invalid links data")

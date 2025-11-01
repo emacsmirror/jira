@@ -170,7 +170,7 @@
 
 (defun jira-actions-add-comment (issue-key text callback)
   "Create a comment to the issue ISSUE-KEY.
- It will include the given TEXT and run the CALLBACK at the end."
+It will include the given TEXT and run the CALLBACK at the end."
   (jira-api-call
    "POST" (concat "issue/" issue-key "/comment")
    :data `(("body" . ,(jira-doc-build text)))
@@ -193,7 +193,8 @@
     (message "Copied issue ID: %s" issue-key)))
 
 (defun jira-actions-add-watcher (issue-key callback)
-  "Add a user as a watcher to ISSUE-KEY."
+  "Add a user as a watcher to ISSUE-KEY.
+CALLBACK is called after adding the watcher."
   (pcase (jira-users-read-user "Add watcher: ")
     (`(,name ,id)
      (jira-api-call "POST"
@@ -205,7 +206,8 @@
                       (funcall callback))))))
 
 (defun jira-actions-remove-watcher (issue-key watchers callback)
-  "Remove a user as a watcher to ISSUE-KEY."
+  "Remove a user as a watcher to ISSUE-KEY.
+WATCHERS is the list of current watchers and CALLBACK is called after removal."
   (pcase (jira-users-read-user "Remove watcher: " watchers)
     (`(,name ,id)
      (jira-api-call "DELETE"

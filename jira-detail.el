@@ -414,6 +414,7 @@ This is a shared function used by both subtasks and linked issues."
     (_ (error "Not a Jira attachment"))))
 
 (defun jira-detail--show-attachment (name data)
+  "Show attachment NAME with DATA in a new buffer."
   (let ((x (generate-new-buffer-name name)))
     (pop-to-buffer x)
     (insert data)
@@ -427,6 +428,7 @@ This is a shared function used by both subtasks and linked issues."
     (set-buffer-modified-p t)))
 
 (defun jira-detail--show-other (key)
+  "Show other issue details for KEY."
   (jira-detail--watchers
    key
    (lambda (data _response)
@@ -448,7 +450,8 @@ This is a shared function used by both subtasks and linked issues."
                        "\n\n")))))))))
 
 (defun jira-detail--watchers (key callback)
-  "Show the watchers list of issue with KEY."
+  "Show the watchers list of issue with KEY.
+CALLBACK is called with the watchers data."
   (jira-api-call "GET"
                  (format "issue/%s/watchers" key)
                  :callback callback))
@@ -460,6 +463,7 @@ This is a shared function used by both subtasks and linked issues."
    :callback (lambda (data _) (jira-detail--issue key data))))
 
 (defun jira-detail--remove-comment-at-point ()
+  "Remove the comment at point."
   (let ((current-section (magit-current-section)))
     (if current-section
 	(if (string-equal (caar (magit-section-ident current-section)) "comment")
@@ -473,7 +477,7 @@ This is a shared function used by both subtasks and linked issues."
       (message "No comment at point"))))
 
 (defun jira-detail--update-field-action (field-id value key)
-  ;; Update FIELD-ID with VALUE for the current issue.
+  "Update FIELD-ID with VALUE for the current issue KEY."
   (jira-api-call
    "PUT" (concat "issue/" key)
    :data `(("fields" . ((,field-id . ,value))))
@@ -487,14 +491,14 @@ This is a shared function used by both subtasks and linked issues."
    :callback (lambda (data _response) (jira-detail-show-issue (alist-get 'key data)))))
 
 (defun jira-detail--update-timetracking-action (field-id value key)
-  ;; Update timetracking FIELD-ID with VALUE for the current issue.
+  "Update timetracking FIELD-ID with VALUE for the current issue KEY."
   (jira-api-call
    "PUT" (concat "issue/" key)
    :data `(("fields" . (("timetracking" . ((,field-id . ,value))))))
    :callback (lambda (_data _response) (jira-detail-show-issue key))))
 
 (defun jira-detail--ensure-update-metadata ()
-  ;; Ensure jira-detail--current-update-metadata is populated and return it.
+  "Ensure jira-detail--current-update-metadata is populated and return it."
   (unless jira-detail--current-update-metadata
     (let* ((issue-type-id (jira-table-extract-field
 			   jira-issues-fields
@@ -511,6 +515,7 @@ This is a shared function used by both subtasks and linked issues."
   jira-detail--current-update-metadata)
 
 (defun jira-detail--updatable-field-id (field-name)
+  "Get the updatable field ID for FIELD-NAME."
   (let ((id (cdr (assoc field-name jira-detail--updatable-fields))))
     (if (and (consp id) (eq (car id) :custom))
         (cdr (assoc (cdr id) jira-fields))
@@ -570,7 +575,7 @@ This is a shared function used by both subtasks and linked issues."
     (lambda () (interactive ) (jira-detail--remove-comment-at-point)))]
   ["Issue Actions"
    ("C" "Change issue status"
-    (lambda () (interactive) (call-interactively 'jira-actions-change-issue-menu)))
+    (lambda () (interactive) (call-interactively #'jira-actions-change-issue-menu)))
    ("O" "Open issue in browser"
     (lambda () (interactive) (jira-actions-open-issue jira-detail--current-key)))
    ("P" "Show parent issue" (lambda () (interactive) (jira-detail--show-parent-issue)))
@@ -599,7 +604,7 @@ This is a shared function used by both subtasks and linked issues."
 		  (interactive) (jira-detail--remove-comment-at-point)))
     (define-key map (kbd "C")
 		(lambda () "Change issue status"
-		  (interactive) (call-interactively 'jira-actions-change-issue-menu)))
+		  (interactive) (call-interactively #'jira-actions-change-issue-menu)))
     (define-key map (kbd "O")
 		(lambda () "Open issue in browser"
 		  (interactive)  (jira-actions-open-issue jira-detail--current-key)))
@@ -626,7 +631,8 @@ This is a shared function used by both subtasks and linked issues."
   "Keymap for Jira Issue Detail buffers.")
 
 (defun jira-detail--show-parent-issue ()
-  "Show the detail view of the parent issue."
+  "Show the detail view of the parent issue.
+Shows the detail view of the parent issue for the current issue."
   (interactive)
   (let ((parent-key (jira-detail--issue-fmt jira-detail--current :parent-key)))
     (if (and parent-key (not (string= parent-key "")))

@@ -193,7 +193,7 @@
 ;; |col A1|col A2|col A3|
 ;; |col B1|col B2|col B3|
 "
-  "Instructions included in jira-edit-mode buffers.")
+  "Instructions included in `jira-edit-mode' buffers.")
 
 (defun jira-edit-insert-mention ()
   "Insert a mention at point, prompting for a username."
@@ -248,7 +248,8 @@ It avoids converting links that are already inside square brackets."
 
 (defun jira-edit-create-editor-buffer
     (buffer-name initial-content save-callback)
-  "Create and display an editor buffer with INITIAL-CONTENT and a SAVE-CALLBACK."
+  "Create and display an editor buffer with INITIAL-CONTENT and a SAVE-CALLBACK.
+BUFFER-NAME is the name of the buffer to create."
   (let ((buf (get-buffer-create buffer-name)))
     (with-current-buffer buf
       (erase-buffer)

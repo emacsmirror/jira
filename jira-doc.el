@@ -140,7 +140,8 @@
   "A thunk returning a prefix for list item nodes.")
 
 (defun jira-doc--format-boxed-text (text prefix)
-  "Format TEXT in an ASCII box with line wrapping."
+  "Format TEXT in an ASCII box with line wrapping.
+PREFIX is used for the box border."
   (let* ((fill-column 80)
          (lines (with-temp-buffer
                   (insert text) (fill-region (point-min) (point-max))
@@ -167,7 +168,8 @@
      (string-join media "\n"))))
 
 (defun jira-doc--format-media (block)
-  "Format an individual media node to a string."
+  "Format an individual media node to a string.
+BLOCK is the media node to format."
   (let* ((attrs (alist-get 'attrs block))
          (type (alist-get 'type attrs))
          (id (alist-get 'id attrs))
@@ -183,6 +185,7 @@
                (if (and alt (not (string= "" alt))) alt id))))))
 
 (defun jira-doc--format-table-row (block)
+  "Format a table row BLOCK to a string."
   (mapcar #'jira-doc--format-content-block
           (alist-get 'content block)))
 
@@ -409,7 +412,8 @@ NAME should be a username defined in `jira-users'."
        (("id" . ,account-id))))))
 
 (defun jira-doc--build-link (contents)
-  "Make an ADF link node."
+  "Make an ADF link node.
+CONTENTS is the link text and URL."
   (let* ((has-title (string-search "|" contents))
          (title (if has-title
                     (substring contents 0 has-title)
@@ -424,23 +428,28 @@ NAME should be a username defined in `jira-users'."
                                ("title" . ,title))))))))
 
 (defun jira-doc--build-code (contents)
-  "Make an ADF text node marked as code."
+  "Make an ADF text node marked as code.
+CONTENTS is the code text to mark."
   (jira-doc--build-text contents
                         `((("type" . "code")))))
 
 (defun jira-doc--build-emoji (name)
-  "Make an ADF emoji node."
+  "Make an ADF emoji node.
+NAME is the emoji name."
   `(("type" . "emoji")
     ("attrs" .
      (("shortName" . ,name)))))
 
 (defun jira-doc--build-code-block (body)
-  "Make an ADF codeBlock node."
+  "Make an ADF codeBlock node.
+BODY is the code block content."
   `(("type" . "codeBlock")
     ("content"
      ,(jira-doc--build-text (string-trim body)))))
 
 (defun jira-doc--build-blockquote (quoted-text)
+  "Make an ADF blockquote node.
+QUOTED-TEXT is the text to quote."
   `(("type" . "blockquote")
     ("content"
      (("type" . "paragraph")
@@ -448,7 +457,8 @@ NAME should be a username defined in `jira-users'."
        ,@(jira-doc-build-inline-blocks quoted-text))))))
 
 (defun jira-doc--build-heading (heading-text)
-  "Make an ADF heading node."
+  "Make an ADF heading node.
+HEADING-TEXT is the heading text."
   (let ((level (aref heading-text 0))
         (content (substring heading-text 3))) ; skip "[1-6]. "
     `(("type" . "heading")
@@ -458,22 +468,26 @@ NAME should be a username defined in `jira-users'."
        ,@(jira-doc-build-inline-blocks content)))))
 
 (defun jira-doc--build-rule ()
+  "Make an ADF rule node (horizontal rule)."
   `(("type" . "rule")))
 
 (defun jira-doc--build-list-item (&rest children)
-  "Make an ADF listItem node."
+  "Make an ADF listItem node.
+CHILDREN are the list item contents."
   `(("type" . "listItem")
     ("content" . ,children)))
 
 (defun jira-doc--build-list (items ordered-p)
-  "Make an ADF bulletList or orderedList node."
+  "Make an ADF bulletList or orderedList node.
+ITEMS are the list items and ORDERED-P determines if it's ordered."
   `(("type" . ,(if ordered-p
                    "orderedList"
                  "bulletList"))
     ("content" . ,items)))
 
 (defun jira-doc--build-table-row (text separator)
-  "Make an ADF tableRow node and child nodes out of TEXT."
+  "Make an ADF tableRow node and child nodes out of TEXT.
+SEPARATOR determines if it's a header or cell row."
   (let ((cell-type (if (string= separator "||")
                        "tableHeader"
                      "tableCell"))
@@ -496,12 +510,15 @@ NAME should be a username defined in `jira-users'."
                                   (cdr cells)))))))
 
 (defun jira-doc--build-table (rows)
-  "Make an ADF table node."
+  "Make an ADF table node.
+ROWS are the table rows."
   `(("type" . "table")
     ("content" . ,rows)))
 
 (defun jira-doc-build-inline-blocks (text)
-  "Parse inline block nodes out of TEXT and convert everything to ADF nodes."
+  "Parse inline block nodes out of TEXT and convert everything to ADF nodes.
+Links and code are actually kinds of marks, but their ADF structure is not
+like other marks, so it's easier to pretend they're blocks."
   (let ((blocks (jira-doc--split (list text)
                                  jira-regexp-mention
                                  #'jira-doc--build-mention)))

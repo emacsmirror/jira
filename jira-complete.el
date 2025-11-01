@@ -76,18 +76,18 @@
 	key (message "Invalid Jira issue key or URL: %s" input))))
 
 (defun jira-complete--is-allowed (field)
-  ;; check if the field is allowed to be used in the issue creation
+  "Check if the FIELD is allowed to be used in the issue creation."
   (let ((schema (alist-get 'schema field)))
     (not (member (alist-get 'system schema) jira-complete--not-allowed-schemas))))
 
 (defun jira-complete--custom-field-id (field-id)
-  ;; remove the "customfield_" prefix from the field-id if it exists
+  "Remove the \"customfield_\" prefix from the FIELD-ID if it exists."
   (if (string-prefix-p "customfield_" field-id)
       (substring field-id (length "customfield_"))
     field-id))
 
 (defun jira-complete--allowed-value-choices (val)
-  ;; create a cons cell with the name and the identifier of an allowed field value
+  "Create a cons cell with the name and the identifier of an allowed field value VAL."
   (let* ((v-id (or (alist-get 'id val)
 		   (alist-get 'accountId val)
 		   (alist-get 'self val)))
@@ -97,7 +97,8 @@
     (cons (format "%s [%s]" v-name v-id) v-id)))
 
 (defun jira-complete--extract-field (issue field-id)
-  ;; for autocomplete-from-jql, extract unique field values from results
+  "For autocomplete-from-jql, extract unique field values from ISSUE results.
+FIELD-ID specifies which field to extract."
   (let ((value (alist-get (intern field-id) (alist-get 'fields issue))))
     (when value
       (let ((list-value (seq-into value 'list)))
@@ -107,7 +108,9 @@
                    list-value))))))
 
 (defun jira-complete--autocomplete-from-jql (field-id field-name is-array)
-  ;; autocomplete possibles values for a field with q JQL query
+  "Autocomplete possible values for a field with a JQL query.
+FIELD-ID is the field identifier, FIELD-NAME is the display name, and
+IS-ARRAY determines if multiple values can be selected."
   (let* ((jql (if (string-prefix-p "customfield_" field-id)
                   (format "cf[%s] is not EMPTY" (jira-complete--custom-field-id field-id))
                 (format "%s is not EMPTY" field-id)))
@@ -133,12 +136,15 @@
 	`((id . ,(cdr (assoc selected choices))))))))
 
 (defun jira-complete--autocomplete-options (url query)
-  ;; call synchronously endpoint to retrieve autocomplete options for a field
+  "Call synchronously endpoint to retrieve autocomplete options for a field.
+URL is the endpoint URL and QUERY is the search query."
   (request-response-data (jira-api-call "GET" (concat url query) :sync t)))
 
 (defun jira-complete--ask-autocomplete (fname url is-array)
-  ;; ask a user for an initial values to call autocomplete and show options
-  ;; reporter autocomplete url has no ?query= at the end, so user cannot pre-filter it
+  "Ask a user for initial values to call autocomplete and show options.
+FNAME is the field name, URL is the endpoint URL, and IS-ARRAY determines
+if multiple values can be selected. Reporter autocomplete URL has no ?query=
+at the end, so user cannot pre-filter it."
   ;; see https://jira.atlassian.com/browse/JRACLOUD-84826
   (let* ((ask-query (not (string-search "user/recommend?context=Reporter" url)))
 	 (msg (format "Find options for field [%s]. Write something and press RET: " fname))
@@ -155,8 +161,8 @@
           `((id . ,(cdr (assoc selected choices)))))))))
 
 (defun jira-complete-ask-field (fd)
-  ;; ask the user for a value for a field, providing some help
-  ;; fd comes from the result of the metadata call
+  "Ask the user for a value for a field, providing some help.
+FD comes from the result of the metadata call."
   (let* ((values (alist-get 'allowedValues fd))
          (fid (alist-get 'fieldId fd))
          (fname (alist-get 'name fd))
@@ -199,8 +205,12 @@
 
 (cl-defun jira-complete--issue-from-metadata
     (metadata &key issue-type project-key parent-key callback)
-  "Create a Jira issue asking the user values for each on of the files
+  "Create a Jira issue asking the user values for each of the fields
 from the METADATA provided by the API.
+ISSUE-TYPE is the type of issue to create.
+PROJECT-KEY is the project key.
+PARENT-KEY is the parent issue key (for subtasks).
+CALLBACK is called with the created issue data.
 
 If project-key or parent-key are provided, they will be used to automatically
 fill the \\='project\\=' and \\='parent\\=' fields."
@@ -230,7 +240,8 @@ fill the \\='project\\=' and \\='parent\\=' fields."
 
 
 (cl-defun jira-complete-ask-issue-fields (project-key issue-type-id &key parent-key callback)
-  "Ask for the fields required to create a Jira issue."
+  "Ask for the fields required to create a Jira issue.
+PROJECT-KEY is the project key and ISSUE-TYPE-ID is the issue type ID."
   (jira-api-get-create-metadata
    project-key issue-type-id
    :callback

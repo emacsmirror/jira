@@ -160,8 +160,9 @@
   (mapcar (lambda (i) (car i)) (tablist-get-marked-items)))
 
 (defun jira-utils-marked-item ()
-  "Return the first marked item in the current tablist or the current
-issue key if we are in the Jira Detail buffer."
+  "Return the first marked item in the current tablist or the current issue key.
+Returns the first marked item in the current tablist, or the current issue
+key if we are in the Jira Detail buffer."
   (or (car (car (tablist-get-marked-items))) jira-detail--current-key))
 
 (defun jira-utils-multiple-marked-items-p ()

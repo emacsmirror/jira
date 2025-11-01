@@ -39,7 +39,7 @@
   :group 'jira :type 'string)
 
 (defcustom jira-base-url ""
-  "Jira instance URL, like: https://acme.atlassian.net"
+  "Jira instance URL, like: https://acme.atlassian.net."
   :group 'jira :type 'string)
 
 (defcustom jira-secondary-urls nil
@@ -75,7 +75,7 @@ Each URL should be a complete Jira URL like: https://acme.atlassian.net"
 
 (defvar jira-users
   nil
-  "Hash table of all Jira users, (displayName property) and ids (accountID)")
+  "Hash table of all Jira users, (displayName property) and ids (accountID).")
 
 (defvar jira-tempo-url "https://api.tempo.io/4/" "Jira Tempo API URL.")
 (defvar jira-account-id nil "Jira account ID of the current user.")
@@ -164,7 +164,7 @@ Ensure secondary URLs list exists for completion."
     (setq jira-secondary-urls '())))
 
 (defun jira-api--url (base-url endpoint)
-  "Generate the full API url from BASE-URL and the given ENDPOINT"
+  "Generate the full API url from BASE-URL and the given ENDPOINT."
   (let* ((version (if (numberp jira-api-version)
 		      (number-to-string jira-api-version)
 		    jira-api-version))
@@ -233,7 +233,7 @@ ERROR is a function to call if the request fails."
 
 (cl-defun jira-api-search (&key params callback sync errback)
   "Perform a JQL search, auto-detecting the correct endpoint.
-  ;; if we already know the endpoint, we use it directly"
+PARAMS are the search parameters. If we already know the endpoint, we use it directly."
   (if jira-search-endpoint
       (jira-api-call
        "GET" jira-search-endpoint :params params :callback callback :sync sync :error errback)
@@ -317,7 +317,7 @@ CALLBACK is the function to call after the request is done."
     (when callback (funcall callback))))
 
 (defun jira-api-get-transitions (issue-keys)
-  "Get the transitions available for a a list of ISSUE-KEYS"
+  "Get the transitions available for a list of ISSUE-KEYS."
   ;; Jira API version 2 does not support bulk transitions
   (let* ((bulk (if (= jira-api-version 3) t nil))
 	 (format-transition
@@ -435,8 +435,7 @@ CALLBACK is the function to call after the request is done."
 (cl-defun jira-api-get-users (&key force)
   "Fetch the list of all Jira user names and IDs and store it in `jira-users'.
 
-If FORCE is non-nil, re-fetches the user list.
-"
+If FORCE is non-nil, re-fetches the user list."
   (interactive)
   (when (or (not jira-users)
             force)
@@ -460,8 +459,8 @@ If FORCE is non-nil, re-fetches the user list.
 
 (cl-defun jira-api-get-create-metadata (project-key issue-type-id &key callback sync)
   "Get the metadata for creating an issue in PROJECT-KEY with ISSUE-TYPE-ID.
-
-CALLBACK is the function to call after the request is done."
+CALLBACK is the function to call after the request is done.
+SYNC determines if the call should be synchronous."
   (let* ((url (format "issue/createmeta/%s/issuetypes/%s"
 		      project-key issue-type-id))
          (response (jira-api-call "GET" url :params `(("maxResults" . 100)) :callback callback :sync sync)))
@@ -469,8 +468,8 @@ CALLBACK is the function to call after the request is done."
       (request-response-data response))))
 
 (cl-defun jira-api-get-project-issue-types (project-key &key callback sync)
-  "Get the issue types available for PROJECT-KEY, optionally CALLBACK if provided
-and making the request synchronous if SYNC."
+  "Get the issue types available for PROJECT-KEY.
+Optionally calls CALLBACK if provided and makes the request synchronous if SYNC."
   (let* ((url (format "issue/createmeta/%s/issuetypes" project-key))
 	 (response (jira-api-call "GET" url :callback callback :sync sync)))
     (when sync (request-response-data response))))
