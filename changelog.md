@@ -1,4 +1,7 @@
 # Changelog
+## 2.12.1 (2025-11-01)
+- Fix compilation for Emacs 29, broken due to an unsupported rx expression.
+
 ## 2.12.0 (2025-10-31)
 - Add multi-host support: Press `H` to switch between Jira instances
 - Configure secondary hosts with `jira-secondary-urls`
