@@ -1,4 +1,7 @@
 # Changelog
+## 2.12.2 (2025-11-04)
+- Use ADX format for description field during subtask creation.
+
 ## 2.12.1 (2025-11-01)
 - Fix compilation for Emacs 29, broken due to an unsupported rx expression.
 
