@@ -1,4 +1,8 @@
 # Changelog
+## 2.13.0 (2025-11-05)
+- Allow combining custom JQL filters with other filter arguments using AND operator.
+- Move named filters to Actions section of List Jira Issues menu to avoid conflicts.
+
 ## 2.12.2 (2025-11-04)
 - Use ADX format for description field during subtask creation.
 

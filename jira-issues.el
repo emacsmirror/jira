@@ -89,7 +89,9 @@ PAGE-TOKEN is optional and used for pagination."
 
 (defun jira-issues--api-filters-and (filters)
   "Concat all FILTERS with AND."
-  (mapconcat (lambda (filter) filter) (remove nil filters) " AND "))
+  (let ((valid-filters (remove nil filters)))
+    (when valid-filters
+      (mapconcat (lambda (filter) filter) valid-filters " AND "))))
 
 (defun jira-issues--data-format-cell (issue field)
   "Format the given FIELD from the given ISSUE."
@@ -162,63 +164,64 @@ PAGE-TOKEN is optional and used for pagination."
     (tabulated-list-print t)
     (setq jira-issues--loading-p nil)))
 
+(defun jira-issues--reset-pagination ()
+  "Reset pagination state to start from the beginning."
+  (setq jira-issues--pagination-current nil)
+  (setq jira-issues--pagination-next nil)
+  (setq jira-issues--pagination-previous nil))
+
 (defun jira-issues--refresh ()
   "Refresh the table."
   (let* ((args (transient-args 'jira-issues-menu))
          (myself (transient-arg-value "--myself" args))
          (current-sprint (transient-arg-value "--current-sprint" args))
-	 (filter-name (transient-arg-value "--filter=" args))
-         (jql (or (transient-arg-value "--jql=" args)
-		  (when filter-name (cdr (assoc filter-name jira-filters)))))
+         (jql (transient-arg-value "--jql=" args))
          (status (transient-arg-value "--status=" args))
          (project (transient-arg-value "--project=" args))
          (resolution (transient-arg-value "--resolution=" args))
          (version (transient-arg-value "--version=" args))
          (assignee (transient-arg-value "--assignee=" args))
          (reporter (transient-arg-value "--reporter=" args)))
-    (setq jira-issues--current-jql
-          (or jql
-              (jira-issues--api-filters-and
-               (list (when myself "assignee = currentUser()")
-                     (when current-sprint "sprint in openSprints()")
-                     (when status (concat "status = \"" status "\""))
-                     (when project (concat "project = \"" project "\""))
-                     (when resolution (concat "resolution = \"" resolution "\""))
-                     (when version (concat "fixversion = \"" version "\""))
-                     (when assignee
-                       (if (string-match-p "EMPTY" assignee)
-                           "assignee = EMPTY"
-                         (let ((account-id (gethash assignee jira-users)))
-                           (when account-id (concat "assignee = " account-id)))))
-                     (when reporter
-                       (let ((account-id (gethash reporter jira-users)))
-                         (when account-id (concat "reporter = " account-id))))))))
-    (setq jira-issues--pagination-current nil)
-    (setq jira-issues--pagination-next nil)
-    (setq jira-issues--pagination-previous nil)
-    (jira-issues--fetch-and-display nil)))
+    (let ((additional-filters
+           (list (when myself "assignee = currentUser()")
+                 (when current-sprint "sprint in openSprints()")
+                 (when status (concat "status = \"" status "\""))
+                 (when project (concat "project = \"" project "\""))
+                 (when resolution (concat "resolution = \"" resolution "\""))
+                 (when version (concat "fixversion = \"" version "\""))
+                 (when assignee
+                   (if (string-match-p "EMPTY" assignee)
+                       "assignee = EMPTY"
+                     (let ((account-id (gethash assignee jira-users)))
+                       (when account-id (concat "assignee = " account-id)))))
+                 (when reporter
+                   (let ((account-id (gethash reporter jira-users)))
+                     (when account-id (concat "reporter = " account-id)))))))
+      (setq jira-issues--current-jql
+            (if jql
+                ;; If we have base JQL, combine it with additional filters
+                (let ((additional-jql (jira-issues--api-filters-and additional-filters)))
+                  (if (and additional-jql (not (string= additional-jql "")))
+                      (concat "(" jql ") AND " additional-jql)
+                    jql))
+              ;; No base JQL, just use additional filters
+              (jira-issues--api-filters-and additional-filters)))))
+  (jira-issues--reset-pagination)
+  (jira-issues--fetch-and-display nil))
 
-(defun jira-issues--filter-invalid-if-jql ()
-  "Return t if JQL filter is set."
-  (if transient-current-command
-      (or (transient-arg-value "--jql=" (transient-args transient-current-command))
-	  (transient-arg-value "--filter=" (transient-args transient-current-command)))))
 
 (defun jira-issues--myself-inapt-p ()
-  "Return t if JQL, filter or assignee is set."
+  "Return t if assignee is set."
   (if transient-current-command
       (let ((args (transient-args transient-current-command)))
-	(or (transient-arg-value "--jql=" args)
-	    (transient-arg-value "--filter=" args)
-	    (transient-arg-value "--assignee=" args)))))
+	(transient-arg-value "--assignee=" args))))
 
 (defun jira-issues--assignee-inapt-p ()
-  "Return t if JQL, filter or myself is set."
+  "Return t if myself is set."
   (if transient-current-command
       (let ((args (transient-args transient-current-command)))
-	(or (transient-arg-value "--jql=" args)
-            (transient-arg-value "--filter=" args)
-            (transient-arg-value "--myself" args)))))
+	(transient-arg-value "--myself" args))))
+
 
 
 (transient-define-prefix jira-issues-menu ()
@@ -235,37 +238,27 @@ PAGE-TOKEN is optional and used for pagination."
      :transient transient--do-call
      :inapt-if jira-issues--myself-inapt-p)
     ("c" "Just from current sprint" "--current-sprint"
-     :transient t
-     :inapt-if jira-issues--filter-invalid-if-jql)
+     :transient t)
     ("s" "Status" "--status="
      :transient t
-     :inapt-if jira-issues--filter-invalid-if-jql
      :choices
      (lambda () (mapcar (lambda (st) (car st)) jira-statuses)))
     ("p" "Project" "--project="
      :transient t
-     :inapt-if jira-issues--filter-invalid-if-jql
      :choices
      (lambda () (mapcar (lambda (prj) (car prj)) jira-projects)))
     ("R" "Reporter" "--reporter="
      :transient t
-     :inapt-if jira-issues--filter-invalid-if-jql
      :choices
      (lambda () (when jira-users (hash-table-keys jira-users))))
     ("r" "Resolution" "--resolution="
      :transient t
-     :inapt-if jira-issues--filter-invalid-if-jql
      :choices
      (lambda () (mapcar (lambda (res) (car res)) jira-resolutions)))
-    ("f" "Filter" "--filter="
-     :transient transient--do-call
-     :choices
-     (lambda () (if jira-filters (mapcar #'car jira-filters) (message "No filters found"))))
     ("j""JQL filter" "--jql="
      :transient transient--do-call)
     ("v" "Fix Versions" "--version="
      :transient t
-     :inapt-if jira-issues--filter-invalid-if-jql
      :choices
      (lambda () (apply #'append (mapcar #'cdr jira-projects-versions))))]
    ["Arguments Help"
@@ -279,7 +272,8 @@ PAGE-TOKEN is optional and used for pagination."
                              " arguments to default ones"))]]
 
   ["Actions"
-   ("l" "List Jira Issues" tablist-revert)])
+   ("l" "List Jira Issues" tablist-revert)
+   ("F" "Apply named filter" (lambda (&optional _) (interactive) (jira-issues--apply-filter)))])
 
 (defun jira-issues--jump-to-tempo ()
   "Jump to Tempo worklogs, closing current buffer."
@@ -293,6 +287,17 @@ PAGE-TOKEN is optional and used for pagination."
     (jira-api--set-current-url selected-host)
     (jira-api-get-basic-data)
     (tablist-revert)))
+
+(defun jira-issues--apply-filter ()
+  "Apply a named filter and warn user that other arguments won't be applied."
+  (if (not jira-filters)
+      (message "No filters found")
+    (let ((selected-filter (completing-read "Filter: " (mapcar #'car jira-filters))))
+      (when selected-filter
+        (message "Filter applied: %s (other arguments will be ignored)" selected-filter)
+        (setq jira-issues--current-jql (cdr (assoc selected-filter jira-filters)))
+        (jira-issues--reset-pagination)
+        (jira-issues--fetch-and-display nil)))))
 
 (transient-define-prefix jira-issues-actions-menu ()
   "Show menu for actions on Jira Issues."
