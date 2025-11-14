@@ -38,10 +38,11 @@
 (require 'jira-tempo)
 (require 'jira-actions)
 (require 'jira-detail)
+(require 'jira-export)
 
 (defcustom jira-issues-table-fields
   '(:key :issue-type-name :status-name :assignee-name
-    :progress-percent :work-ratio :remaining-time :summary)
+	 :progress-percent :work-ratio :remaining-time :summary)
   "Fields to show in the Jira issues table.
 
 Allowed values in variable `jira-issues-fields'."
@@ -61,6 +62,8 @@ Allowed values in variable `jira-issues-fields'."
   "The pagination token for the next page of issues.")
 (defvar jira-issues--pagination-previous nil
   "A list of pagination tokens for previously viewed pages.")
+(defvar jira-issues--raw-issues nil
+  "The raw issues data for the current page.")
 
 
 ;; files that we always want to retrieve because they are used
@@ -159,6 +162,7 @@ PAGE-TOKEN is optional and used for pagination."
     (setq jira-issues--pagination-next next-token)
     (when jira-debug
       (message "Jira Issues: Page %d" (1+ (length jira-issues--pagination-previous))))
+    (setq jira-issues--raw-issues issues)
     (setq tabulated-list-entries (mapcar #'jira-issues--data-format-issue issues))
     (setq jira-issues-key-summary-map (jira-issues-store-issues-info issues))
     (tabulated-list-print t)
@@ -168,7 +172,8 @@ PAGE-TOKEN is optional and used for pagination."
   "Reset pagination state to start from the beginning."
   (setq jira-issues--pagination-current nil)
   (setq jira-issues--pagination-next nil)
-  (setq jira-issues--pagination-previous nil))
+  (setq jira-issues--pagination-previous nil)
+  (setq jira-issues--raw-issues nil))
 
 (defun jira-issues--refresh ()
   "Refresh the table."
@@ -310,6 +315,7 @@ PAGE-TOKEN is optional and used for pagination."
 		 ("T" "Jump to Tempo worklogs"
 		  (lambda () (interactive) (jira-issues--jump-to-tempo)))
 		 ("H" "Switch JIRA host" jira-issues--switch-host-and-refresh)
+		 ("e" "Export issues" jira-export-menu)
                  ("M-n" "Next page" jira-issues-next-page)
                  ("M-p" "Previous page" jira-issues-previous-page)]]
   [[:description
@@ -346,6 +352,7 @@ PAGE-TOKEN is optional and used for pagination."
     (define-key map "O" (lambda () (interactive)
                           (jira-actions-open-issue (jira-utils-marked-item))))
     (define-key map "W" 'jira-actions-add-worklog-menu)
+    (define-key map "e" 'jira-export-menu)
     (define-key map (kbd "M-n") 'jira-issues-next-page)
     (define-key map (kbd "M-p") 'jira-issues-previous-page)
     map)

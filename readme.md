@@ -6,8 +6,8 @@ Emacs integration for [Atlassian's Jira](https://www.atlassian.com/software/jira
 
 > If you have no choice but to use Jira, at least do it without leaving Emacs.
 
-Supports listing and filtering issues, viewing issue details,
-modifying certain properties, and adding worklogs.
+Supports listing and filtering issues, viewing issue details, modifying certain
+properties, adding worklogs or exporting issues to `Markdown`, `Org-mode` or `CSV`.
 
 Additionally, it provides support for displaying all worklogs from the
 [Tempo](https://www.tempo.io/products/jira-time-tracking) integration.
@@ -137,6 +137,10 @@ the selected issue, add worklogs, and more.
 Press `l` to select the filters to be applied to the list of
 issues. You can filter by several fields, use one of your starred filters,
 or even write your own `JQL` filter.
+
+To export issues, press `E` to open the export menu, or use `M-x jira-export-issues` to
+export all visible issues to your preferred format (`Markdown`, `Org-mode`, or
+`CSV`). Issue keys and URLs are automatically converted to clickable links.
 
 - Thanks to
 [transient](https://magit.vc/manual/transient/Saving-Values.html#Saving-Values),
