@@ -34,7 +34,6 @@
 (require 'jira-table)
 (require 'tablist)
 (require 'transient)
-(require 'markdown-mode)
 
 
 (defvar jira-export-supported-formats '(markdown org csv)
@@ -200,7 +199,10 @@ If FORMAT-TYPE is provided, format links appropriately for that format."
       (goto-char (point-min))
       (cond
        ((eq format-type 'org) (org-mode))
-       ((eq format-type 'markdown) (markdown-mode)))
+       ((eq format-type 'markdown)
+       (if (require 'markdown-mode nil t)
+           (markdown-mode)
+         (fundamental-mode))))
       (setq buffer-read-only t))
     (pop-to-buffer buffer-name)
     (message "Exported %d issues to %s format" (length issues) format-name)))
