@@ -188,7 +188,7 @@ Ensure secondary URLs list exists for completion."
     (message "[Jira API Response Headers]: %s" (or response-headers "No headers"))
     (message "[Jira API Response Body]: %s" (or response-data "No response body"))))
 
-(cl-defun jira-api-call (verb endpoint &key params data callback parser sync error)
+(cl-defun jira-api-call (verb endpoint &key params data callback parser sync error complete)
   "Perform a VERB request to the Jira API ENDPOINT.
 
 PARAMS is a list of cons cells, DATA is the request body, and CALLBACK
@@ -199,7 +199,8 @@ Sync is a boolean indicating whether the request should be
 synchronous or not. If SYNC is non-nil, the request will block
 until it completes, otherwise it will be asynchronous.
 
-ERROR is a function to call if the request fails."
+ERROR is a function to call if the request fails.
+COMPLETE is a function to call when the request completes (regardless of success/failure)."
   (let ((current-url (jira-api--get-current-url)))
     (message "[Jira API Call]: %s %s (URL: %s)" verb endpoint current-url)
     (when (and jira-debug data)
@@ -229,7 +230,8 @@ ERROR is a function to call if the request fails."
 	:error (or error
 		   (cl-function
 		    (lambda (&key response error-thrown &allow-other-keys)
-		      (jira-api--callback-error-log response error-thrown))))))))
+		      (jira-api--callback-error-log response error-thrown))))
+	:complete complete))))
 
 (cl-defun jira-api-search (&key params callback sync errback)
   "Perform a JQL search, auto-detecting the correct endpoint.
@@ -294,10 +296,10 @@ Calling CALLBACK if successful and passing PARAMS."
 FORCE will force the request even if the account ID is already stored.
 CALLBACK is the function to call after the request is done."
   (if (or force (not jira-account-id))
-      (let ((c (lambda (data _response)
-                 (setq jira-account-id (cdr (assoc 'accountId data)))
-                 (when callback (funcall callback)))))
-        (jira-api-call "GET" "myself" :callback c))
+      (let ((success (lambda (data _response)
+                       (setq jira-account-id (cdr (assoc 'accountId data)))))
+            (next (lambda (&rest _args) (when callback (funcall callback)))))
+        (jira-api-call "GET" "myself" :callback success :complete next))
     (when callback (funcall callback))))
 
 (cl-defun jira-api-get-fields (&key force callback)
@@ -306,14 +308,14 @@ CALLBACK is the function to call after the request is done."
 FORCE will force the request even if the fields are already stored.
 CALLBACK is the function to call after the request is done."
   (if (or force (not jira-fields))
-      (let ((c (lambda (data _response)
-                 (setq jira-fields
-                       (mapcar (lambda (field)
-                                 (cons (cdr (assoc 'name field))
-                                       (cdr (assoc 'key field))))
-                         data))
-                 (when callback (funcall callback)))))
-        (jira-api-call "GET" "field" :callback c))
+      (let ((success (lambda (data _response)
+                       (setq jira-fields
+			     (mapcar (lambda (field)
+                                       (cons (cdr (assoc 'name field))
+					     (cdr (assoc 'key field))))
+				     data))))
+            (next (lambda (&rest _args) (when callback (funcall callback)))))
+        (jira-api-call "GET" "field" :callback success :complete next))
     (when callback (funcall callback))))
 
 (defun jira-api-get-transitions (issue-keys)
@@ -357,9 +359,9 @@ CALLBACK is the function to call after the request is done."
         (jira-api-call
          "GET" "status"
          :callback
-         (lambda (data _response)
-           (setq jira-statuses (mapcar fmt data))
-           (when callback (funcall callback)))))
+         (lambda (data _response) (setq jira-statuses (mapcar fmt data)))
+         :complete
+         (lambda (&rest _args) (when callback (funcall callback)))))
     (when callback (funcall callback))))
 
 (cl-defun jira-api-get-resolutions (&key force callback)
@@ -377,8 +379,9 @@ CALLBACK is the function to call after the request is done."
 	     ;; Jira UI represents with the "Unresolved" key the
 	     ;; resolutions for fields that don't have a resolution set.
 	     ;; If we find this value, we will send a nil
-             (setq jira-resolutions (cons (cons "Unresolved" nil) resolutions)))
-           (when callback (funcall callback)))))
+             (setq jira-resolutions (cons (cons "Unresolved" nil) resolutions))))
+         :complete
+         (lambda (&rest _args) (when callback (funcall callback)))))
     (when callback (funcall callback))))
 
 (cl-defun jira-api-get-filters (&key force callback)
@@ -391,9 +394,10 @@ CALLBACK is the function to call after the request is done."
         (jira-api-call
          "GET" "filter/my?includeFavourites=true"
          :callback
-         (lambda (data _response)
-           (setq jira-filters (mapcar fmt data))
-           (when callback (funcall callback)))))))
+         (lambda (data _response) (setq jira-filters (mapcar fmt data)))
+         :complete
+         (lambda (&rest _args) (when callback (funcall callback)))))
+    (when callback (funcall callback))))
 
 (cl-defun jira-api-get-projects (&key force callback)
   "Get the 10 most recent projects.
@@ -408,7 +412,9 @@ CALLBACK is the function to call after the request is done."
          :callback
          (lambda (data _)
            (setq jira-projects (mapcar fmt data))
-           (jira-api-get-versions :force t :callback callback))))
+           (jira-api-get-versions :force t :callback callback))
+         :complete
+         (lambda (&rest _args) (when callback (funcall callback)))))
     (when callback (funcall callback))))
 
 (cl-defun jira-api-get-versions (&key force callback)

@@ -1,4 +1,8 @@
 # Changelog
+## 2.13.1 (2025-11-14)
+- Add `complete` callback parameter to `jira-api-call` for better async handling.
+- Refactor API functions to separate success and complete callbacks for improved error handling.
+
 ## 2.13.0 (2025-11-05)
 - Allow combining custom JQL filters with other filter arguments using AND operator.
 - Move named filters to Actions section of List Jira Issues menu to avoid conflicts.
