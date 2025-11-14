@@ -138,10 +138,6 @@ Press `l` to select the filters to be applied to the list of
 issues. You can filter by several fields, use one of your starred filters,
 or even write your own `JQL` filter.
 
-To export issues, press `E` to open the export menu, or use `M-x jira-export-issues` to
-export all visible issues to your preferred format (`Markdown`, `Org-mode`, or
-`CSV`). Issue keys and URLs are automatically converted to clickable links.
-
 - Thanks to
 [transient](https://magit.vc/manual/transient/Saving-Values.html#Saving-Values),
 all the transients arguments can be set temporarily or
@@ -151,6 +147,11 @@ for more information.
 
 - Check out [tablist docs](https://github.com/politza/tablist) for additional
 keybindings to manage the table (sorting, filtering, exporting, etc)
+
+
+To export issues, press `E` to open the export menu, or use `M-x jira-export-issues` to
+export all visible issues to your preferred format (`Markdown`, `Org-mode`, or
+`CSV`). Issue keys and URLs are automatically converted to clickable links.
 
 If you configured [Tempo integration](https://www.tempo.io/), you can
 also run `jira-tempo` to view the list of worklogs for the current
