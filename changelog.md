@@ -1,4 +1,7 @@
 # Changelog
+## 2.13.2 (2025-11-14)
+- Add `jira-detail-reuse-buffer` configuration option to enable reusing a single Jira detail buffer instead of creating separate buffers for each issue. When enabled, all issue details are displayed in one buffer named "*Jira Issue Detail*" instead of separate buffers like "*Jira Issue Detail: [PROJ-123]*".
+
 ## 2.13.1 (2025-11-14)
 - Add `complete` callback parameter to `jira-api-call` for better async handling.
 - Refactor API functions to separate success and complete callbacks for improved error handling.

@@ -82,6 +82,16 @@
                  (const :tag "Oldest first" nil))
   :group 'jira)
 
+(defcustom jira-detail-reuse-buffer
+  nil
+  "If non-nil, reuse a single Jira detail buffer instead of creating separate
+buffers for each issue.
+When enabled, all issue details will be displayed in one buffer named
+ \"*Jira Issue Detail*\" instead of creating separate buffers
+like \"*Jira Issue Detail: [PROJ-123]*\"."
+  :type 'boolean
+  :group 'jira)
+
 ;; they override the default formatters specified
 ;; in jira-issues-fields
 (defvar jira-detail-formatters
@@ -304,8 +314,11 @@
               (insert "\n"))))))))
 
 (defun jira-detail--get-issue-buffer (key)
-  "Get or create the Jira issue detail buffer for KEY."
-  (get-buffer-create (concat "*Jira Issue Detail: [" key "]*")))
+  "Get or create the Jira issue detail buffer for KEY.
+If `jira-detail-reuse-buffer' is enabled, reuse a single buffer for all issues."
+  (if jira-detail-reuse-buffer
+      (get-buffer-create "*Jira Issue Detail*")
+    (get-buffer-create (concat "*Jira Issue Detail: [" key "]*"))))
 
 (defun jira-detail--process-link (link)
   "Process a single LINK and return (issue direction link-type) tuple."
