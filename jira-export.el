@@ -201,7 +201,7 @@ If FORMAT-TYPE is provided, format links appropriately for that format."
        ((eq format-type 'org) (org-mode))
        ((eq format-type 'markdown)
        (if (require 'markdown-mode nil t)
-           (markdown-mode)
+           (funcall 'markdown-mode)
          (fundamental-mode))))
       (setq buffer-read-only t))
     (pop-to-buffer buffer-name)
