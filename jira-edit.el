@@ -64,7 +64,7 @@
   (rx "[~" (submatch (*? (not "]"))) "]"))
 
 (defconst jira-regexp-emoji
-  (rx ":" (submatch (+ (or lower digit "-"))) ":"))
+  (rx symbol-start ":" (submatch (+ (or lower digit "-"))) ":" symbol-end))
 
 (defvar jira-inline-block-keywords
   `((,jira-regexp-mention . 'jira-face-mention)
@@ -223,6 +223,7 @@
   (set-syntax-table (let ((st (make-syntax-table)))
                       (modify-syntax-entry ?+ "w" st)
                       (modify-syntax-entry ?* "w" st)
+                      (modify-syntax-entry ?: "w" st)
                       (modify-syntax-entry ?_ "w" st)
                       (modify-syntax-entry ?- "w" st)
                       (modify-syntax-entry ?{ "w" st)
