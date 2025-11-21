@@ -651,12 +651,18 @@ like other marks, so it's easier to pretend they're blocks."
             res))
     (reverse res)))
 
+(defun jira-doc--split-paragraphs (blocks)
+  (jira-doc--split blocks
+                   "\n\\([ 	]*\n\\)+"
+                   #'string-trim))
+
 (defun jira-doc-build-toplevel-blocks (text)
   "Parse toplevel blocks out of TEXT and convert to ADF nodes."
   (let ((blocks
 	 (thread-first
-	   text
-	   (jira-doc--split jira-regexp-code-block #'jira-doc--build-code-block)
+	   (list text)
+	   (jira-doc--split jira-regexp-code-block  #'jira-doc--build-code-block)
+           jira-doc--split-paragraphs
 	   (jira-doc--split jira-regexp-blockquote  #'jira-doc--build-blockquote)
 	   (jira-doc--split jira-regexp-heading     #'jira-doc--build-heading)
 	   (jira-doc--split jira-regexp-hr          #'jira-doc--build-rule)
@@ -671,13 +677,9 @@ like other marks, so it's easier to pretend they're blocks."
 
 (defun jira-doc-build-adf (text)
   "Build a Jira document (ADF) from TEXT."
-  (let* ((paras (mapcar #'string-trim
-                        (split-string (or text "")
-                                      "\n\\([ 	]*\n\\)+"
-                                      t))))
-    `(("type" . "doc") ("version" . 1)
-      ("content" .
-       ,(jira-doc-build-toplevel-blocks paras)))))
+  `(("type" . "doc") ("version" . 1)
+    ("content" .
+     ,(jira-doc-build-toplevel-blocks text))))
 
 ;;; Building v2 texts.
 (defun jira-doc-build-v2 (text)
