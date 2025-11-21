@@ -372,7 +372,7 @@ which do not match are returned as-is."
   (let* ((mark-regexp (concat "\\_<\\("
                               (string-join (mapcar (lambda (d)
                                                        (let ((delim (regexp-quote (car d))))
-                                                         (concat delim ".+?" delim)))
+                                                         (concat delim "[^" delim "]+?" delim)))
                                                    jira-doc--marks-delimiters)
                                            "\\|")
                               "\\)\\_>"))
