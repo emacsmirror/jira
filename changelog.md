@@ -1,4 +1,7 @@
 # Changelog
+## 2.14.1 (2025-11-28)
+-  Fix multi-paragraph code blocks and misrecognized text marks in ADF
+
 ## 2.14.0 (2025-11-14)
 -  Add export functionality for JIRA issues with support for clickable links. Export to
    Markdown, Org-mode, and CSV formats. Accessible via `jira-export-issues` or from the
