@@ -1,4 +1,15 @@
 # Changelog
+## 2.22.0 (2026-10-04)
+- Upload attachments with `A` in the detail view, delete them with `d`, and attach a region,
+  buffer or Dired marked files from anywhere with `jira-attach-dwim` (#84)
+- Show an issue's children in the detail view, and list them with `K` (#83)
+- Display and edit `blockCard` and `embedCard` link previews (#75)
+- The issues list remembers the filters you list with, so `--myself` can be removed (#82)
+- Issue links and "open in browser" follow the current host when using multiple hosts (#85)
+- Fix loading on Emacs 29 (#79) and the `jira-export-menu` autoload (#73)
+- Fix the global syntax table being modified when converting links (#80)
+- Rewrite the README with a complete usage guide
+
 ## 2.21.1 (2026-03-15)
 - Fix create subtask for API v2
 
