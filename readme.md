@@ -2,217 +2,257 @@
 
 Emacs integration for [Atlassian's Jira](https://www.atlassian.com/software/jira).
 
+[![MELPA](https://melpa.org/packages/jira-badge.svg)](https://melpa.org/#/jira)
 [![MELPA Stable](https://stable.melpa.org/packages/jira-badge.svg)](https://stable.melpa.org/#/jira)
 
 > If you have no choice but to use Jira, at least do it without leaving Emacs.
 
-Supports listing and filtering issues, viewing issue details, modifying certain
-properties, adding worklogs or exporting issues to `Markdown`, `Org-mode` or `CSV`.
+## Features
 
-Additionally, it provides support for displaying all worklogs from the
-[Tempo](https://www.tempo.io/products/jira-time-tracking) integration.
+- 📋 **List and filter issues** by assignee, sprint, status, project, type, version,
+  your saved Jira filters or any `JQL` query.
+- 🔍 **Issue detail view** with description, comments, subtasks, children, linked issues,
+  attachments and watchers.
+- ✏️ **Edit from Emacs**: change status, update any field with completion, write and edit
+  comments and descriptions using Jira markup.
+- 🧩 **Create subtasks**, add watchers, upload and delete attachments.
+- ⏱️ **Log work** and browse your [Tempo](https://www.tempo.io/products/jira-time-tracking)
+  worklogs for the week.
+- 📤 **Export** issue lists to `Markdown`, `Org-mode` or `CSV`.
+- 🌐 Works with **Jira Cloud and Jira Server / Data Center** (REST API v3 and v2), and with
+  **several Jira instances** at once.
 
-## 🎉 Version 2 Release! 🎉
-
-We're excited to announce a major update to `jira.el`, bringing significant enhancements
-to the Jira Detail view and overall usability:
-
-- **Create issue subtasks**
-  - Press `S` from the detail view of an issue to create a subtask.
-- **Enhanced Issue Management from Detail View:**
-  - Press `?` to reveal a comprehensive menu of all available actions and keybindings.
-  - Update various issue fields effortlessly using `U`. Enjoy **intelligent suggestions**
-    for many fields, pulled directly from the Jira API, making updates faster and more
-    accurate.
-  - Seamlessly change issue statuses with a quick press of `C`.
-
-Upgrade today for a more powerful and efficient Jira experience within Emacs!
-
-
-## Screenshots
-
-- List issues
-
-![List issues](doc/list-issues.png)
-
-- Filter issues
-
-![Filter issues](doc/list-issues-filter.png)
-
-- Change selected issue
-
-![Change issue](doc/change-issue.png)
-
-- List [Tempo](https://www.tempo.io/) worklogs
-
-![List Worklogs](doc/list-worklogs.png)
+| List issues | Filter issues |
+|---|---|
+| ![List issues](doc/list-issues.png) | ![Filter issues](doc/list-issues-filter.png) |
+| **Change an issue** | **Tempo worklogs** |
+| ![Change issue](doc/change-issue.png) | ![List worklogs](doc/list-worklogs.png) |
 
 ## Installation
-This package is available in [MELPA](https://github.com/milkypostman/melpa),
-so you just need to do:
+
+`jira.el` requires Emacs 29.1 or newer and is available on [MELPA](https://melpa.org/#/jira):
 
 ```elisp
 (use-package jira
   :config
-  (setq jira-base-url "https://acme.atlassian.net") ;; Jira instance URL
-  (setq jira-username "johndoe@acme.com") ;; Jira username (usually, an email)
-  ;; API token for Jira
-  ;; See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
-  (setq jira-token "foobar123123")
-  (setq jira-token-is-personal-access-token nil)
-  (setq jira-api-version 3) ;; Version 2 is also allowed
-  ;; (Optional) API token for JIRA TEMPO plugin
-  ;; See https://apidocs.tempo.io/
-  (setq jira-tempo-token "foobar123123"))
+  (setq jira-base-url "https://acme.atlassian.net"))
 ```
 
-You can also install it using
-[straight.el](https://github.com/radian-software/straight.el)
+Or, with [straight.el](https://github.com/radian-software/straight.el):
 
 ```elisp
 (use-package jira
   :straight (:host github :repo "unmonoqueteclea/jira.el")
-  :demand t
-  :config ...)
+  :config
+  (setq jira-base-url "https://acme.atlassian.net"))
 ```
 
 ## Authentication
-`jira.el` supports two methods for authenticating with the Jira REST API:
 
-1.  **Configuration variables:** You can directly set the
-    `jira-username` and `jira-token` variables (and `jira-tempo-token`
-    if you use it) in your Emacs configuration (e.g., your `init.el`
-    or `config.el`).  This is often the simplest way to get started.
+You need an [API token](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
+for Jira Cloud, or a [Personal Access Token](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html)
+for Jira Server / Data Center.
 
-    ```elisp
-      (setq jira-username "johndoe@acme.com") ;; Jira username (usually, an email)
-	  ;; API token for Jira
-	  ;; See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
-	  (setq jira-token "foobar123123")
-    ```
+### With `auth-source` (recommended)
 
-    While convenient, storing your token directly in your Emacs
-    configuration can pose a security risk if your configuration file
-    is not properly protected. Consider using `auth-source` for more
-    secure storage.
+Store your credentials in `~/.authinfo.gpg` (or `~/.authinfo`) and leave `jira-username`
+and `jira-token` unset:
 
-2.  **`auth-source`:** This is the recommended and more secure
-    method. `auth-source` is an Emacs library for managing
-    credentials.  It allows you to store your Jira username and API
-    token in a secure location (like `~/.authinfo.gpg`) and `jira.el`
-    will retrieve them when needed.
+```
+machine acme.atlassian.net login johndoe@acme.com port https password YOUR-API-TOKEN
+```
 
-    -  **Configure `auth-source`:** Add an entry to your
-    `~/.authinfo` or `~/.authinfo.gpg` file (create the file if it
-    doesn't exist).
+The `machine` must be `jira-base-url` without the `https://` prefix (including the
+trailing `/` if your URL has one).
 
-	```
-	machine acme.atlassian.net login johndoe@acme.com port https password foobar123123
-	```
+### With variables
 
-	And, if you use `tempo.io`:
+Simpler, but keeps the token in your configuration:
 
-	```
-	machine tempo.io port https password foobar123123
-	```
+```elisp
+(setq jira-username "johndoe@acme.com")
+(setq jira-token "YOUR-API-TOKEN")
+```
 
-    **`jira.el` will automatically use `auth-source` if `jira-username` and `jira-token` are not explicitly set.**
+When `jira-username` and `jira-token` are set, they are used for every host and
+`auth-source` is ignored.
 
-	⚠️ If you are using a Jira [**Personal Access Token (PAT)**](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html) instead
-    of an **API Token**, you will need to set `jira-token-is-personal-access-token`:
+### Jira Server / Data Center
 
-	```elisp
-	(setq jira-token-is-personal-access-token t)
-	```
+If you use a Personal Access Token, or your instance only supports REST API v2:
 
-🌐 For multiple Jira hosts, add entries for each host in your auth-source file and
-configure `jira-secondary-urls`. Press `H` in the issues list to switch between hosts.
+```elisp
+(setq jira-token-is-personal-access-token t)
+(setq jira-api-version 2)
+```
 
-## Quickstart
-Use `M-x jira-issues` to check the list of issues assigned to the
-configured user for the active sprint. Once the list is loaded, press
-`?` to see the available actions. You can modify the filters, update
-the selected issue, add worklogs, and more.
+### Tempo (optional)
 
-Press `l` to select the filters to be applied to the list of
-issues. You can filter by several fields, use one of your starred filters,
-or even write your own `JQL` filter.
+To list Tempo worklogs, add a [Tempo API token](https://apidocs.tempo.io/), either in
+`auth-source`:
 
-- Thanks to
-[transient](https://magit.vc/manual/transient/Saving-Values.html#Saving-Values),
-all the transients arguments can be set temporarily or
-permanently. See [transient
-docs](https://magit.vc/manual/transient/Saving-Values.html#Saving-Values)
-for more information.
+```
+machine tempo.io port https password YOUR-TEMPO-TOKEN
+```
 
-- Check out [tablist docs](https://github.com/politza/tablist) for additional
-keybindings to manage the table (sorting, filtering, exporting, etc)
+or with `(setq jira-tempo-token "YOUR-TEMPO-TOKEN")`.
 
+### Several Jira instances
 
-To export issues, press `E` to open the export menu, or use `M-x jira-export-issues` to
-export all visible issues to your preferred format (`Markdown`, `Org-mode`, or
-`CSV`). Issue keys and URLs are automatically converted to clickable links.
+Add one `auth-source` entry per host and list the extra hosts in `jira-secondary-urls`:
 
-If you configured [Tempo integration](https://www.tempo.io/), you can
-also run `jira-tempo` to view the list of worklogs for the current
-week.
+```elisp
+(setq jira-base-url "https://acme.atlassian.net")
+(setq jira-secondary-urls '("https://other.atlassian.net"))
+```
 
-## FAQ
+Press `H` in the issues list to switch between them.
 
-- ❓ **Does it work with my old on-premise instance?**
+## Usage
 
-	I try to provide support as much as possible, but I don't have access to this kind of
-	JIRA installation, so I rely on the official documentation and user PRs and issues. If
-	you're using API version 2, make sure to set `jira-api-version` (see the
-	**Customization** section). Version `v2.8.2` fixes an issue with older on-premise
-	instances related to the endpoint that lists issues. I'm also working on making issue
-	transitions work (see https://github.com/unmonoqueteclea/jira.el/issues/37).
+Run `M-x jira-issues`. In any `jira.el` buffer, press `?` to see every available action.
 
-- ❓ **Does it work with Evil Mode?**
+### Issues list
 
-	Not supported currently as I don't use Evil Mode. PRs welcome! See https://github.com/unmonoqueteclea/jira.el/issues/31
+The list starts with the issues assigned to you. Press `l` to open the filters menu: toggle
+or set the filters you want and press `l` again to list. Press `F` there to use one of
+your saved Jira filters, or `j` to write a `JQL` query. The filters you list with are
+remembered for the session; press `C-x C-k` in the menu to reset them.
+
+| Key | Action |
+|---|---|
+| `l` | Filter and list issues |
+| `g` | Refresh the list |
+| `I` | Show issue detail |
+| `C` | Change status, resolution or remaining estimate of the selected issues |
+| `W` | Add a worklog |
+| `O` | Open issue in the browser |
+| `c` | Copy issue key |
+| `f` | Find an issue by key or URL |
+| `e` | Export the list (Markdown, Org-mode or CSV) |
+| `T` | Go to Tempo worklogs |
+| `H` | Switch Jira host |
+| `M-n` / `M-p` | Next / previous page |
+| `?` | Show all actions |
+
+The list is a [tablist](https://github.com/politza/tablist) buffer, so you can also mark
+several issues (`m`, `u`) to change them at once, and sort or filter the table.
+
+### Issue detail
+
+| Key | Action |
+|---|---|
+| `C` | Change status |
+| `U` | Update a field (summary, description, assignee, priority, labels, ...) |
+| `+` | Add a comment |
+| `e` | Edit the comment at point |
+| `-` | Delete the comment at point |
+| `S` | Create a subtask |
+| `A` | Attach a file |
+| `w` | Add or remove watchers |
+| `P` | Show the parent issue |
+| `K` | List the issue's children |
+| `O` | Open issue in the browser |
+| `g` | Refresh |
+| `?` | Show all actions |
+
+Sections are collapsible with `TAB`. On a subtask, child or linked issue, `RET` opens it;
+on an attachment, `RET` shows it and `d` deletes it.
+
+### Writing comments and descriptions
+
+Comments and descriptions open in an editor buffer using
+[Jira text markup](https://jira.atlassian.com/secure/WikiRendererHelpAction.jspa?section=all):
+`*bold*`, `_italic_`, `` `code` ``, `[title|https://example.com]`, lists, tables, code
+blocks and more. A cheat sheet is included at the bottom of the buffer.
+
+| Key | Action |
+|---|---|
+| `C-c C-c` | Send |
+| `C-c C-k` | Cancel |
+| `C-c m` | Mention a user |
+| `C-c d` | Insert a date |
+| `C-c c` | Insert colored text |
+
+### Attachments from anywhere
+
+`M-x jira-attach-dwim` attaches the active region, the current buffer, or the marked
+files in a Dired buffer to an issue. It's handy to bind it globally:
+
+```elisp
+(keymap-global-set "C-c j a" #'jira-attach-dwim)
+```
+
+### Worklogs and Tempo
+
+Press `W` on an issue to log time. With Tempo configured, `M-x jira-tempo` (or `T` from the
+issues list) lists your worklogs for the current week, where `D` deletes the selected one.
+
+### Exporting
+
+Press `e` in the issues list, or run `M-x jira-export-issues`, to export the visible issues
+to `Markdown`, `Org-mode` or `CSV`. Issue keys become links.
 
 ## Customization
 
-This is the list of customizations you can set:
+All options are in `M-x customize-group RET jira`. The most useful ones:
 
-- `jira-base-url`: **Mandatory**: Jira instance URL, like: https://acme.atlassian.net
-- `jira-username`: Jira username (usually, an email)
-- `jira-token`: Jira REST API token
-- `jira-api-version`: Jira REST API version. Can be `2` or `3` (default: `3`)
-   - ⚠️ Some Jira instances only allow REST API version 2
-- `jira-tempo-token`: Jira [tempo.io](https://www.tempo.io/) API token
-- `jira-debug`: Whether to log jira.el internal processes data, including API responses
-- `jira-users-max-results`:  Maximum number of Jira usernames to retrieve (default: `1000`)
-- `jira-issues-table-fields`: Fields to show in the issues table.
-   Allowed values are defined in `jira-issues-fields`. Example:
-   `'(:key :issue-type-name :status-name :assignee-name :progress-percent :work-ratio
-      :remaining-time :summary)`
-- `jira-issues-max-results`: Maximum number of Jira issues to retrieve
-- `jira-issues-default-type`: Default issue type filter for the issues list.
-  When set to a type name (e.g., "Epic", "Story", "Bug"), the issues list will
-  automatically filter to show only that type unless explicitly overridden via
-  the transient menu. Set to nil for no default filter. (default: `nil`)
-- `jira-tempo-max-results`: Maximum number of Tempo worklogs to retrieve
-- `jira-comments-display-recent-first`: The order to display Jira comments in
-  issue detail view.
-- `jira-use-color-marks`: If true, display color marks in Jira text.
-  (default: `t`)
-- `jira-detail-reuse-buffer`: If non-nil, reuse a single Jira detail buffer
-  instead of creating separate buffers for each issue. When enabled, all issue
-  details will be displayed in one buffer named "*Jira Issue Detail*" instead
-  of creating separate buffers like "*Jira Issue Detail: [PROJ-123]*". (default: `nil`)
-- `jira-detail-show-announcements`: Whether to show announcements in Jira
-   detail view. Useful to know new features of `jira.el`. (default: `t`)
-- `jira-status-faces`: Alist mapping status names to faces to override
-  default styling (faces are automatically assigned to statuses based
-  on the status category: `To Do`, `In Progress` or `Done`). For example:
-  ```elisp
-  (defface jira-face-pr
+| Variable | Description |
+|---|---|
+| `jira-base-url` | **Required.** Jira instance URL, e.g. `https://acme.atlassian.net` |
+| `jira-secondary-urls` | Other Jira instances to switch to with `H` |
+| `jira-username`, `jira-token` | Credentials, if not using `auth-source` |
+| `jira-token-is-personal-access-token` | Use a Personal Access Token (Bearer auth) |
+| `jira-api-version` | REST API version, `3` (default) or `2` |
+| `jira-tempo-token` | Tempo API token, if not using `auth-source` |
+| `jira-issues-table-fields` | Columns of the issues list, from `jira-issues-fields`, e.g. `'(:key :issue-type-name :status-name :assignee-name :summary)` |
+| `jira-issues-max-results` | Issues per page (default `30`) |
+| `jira-issues-default-type` | Default issue type filter, e.g. `"Bug"` (default `nil`) |
+| `jira-issues-sort-key` | Default sort column, `nil` keeps the `JQL` order (default `("Status" . nil)`) |
+| `jira-detail-reuse-buffer` | Reuse one detail buffer for all issues (default `nil`) |
+| `jira-comments-display-recent-first` | Show the newest comments first |
+| `jira-status-faces` | Custom faces per status name (see below) |
+| `jira-use-color-marks` | Show colored text from Jira (default `t`) |
+| `jira-datetime-format` | Format for dates and times (default `"%c"`) |
+| `jira-users-max-results` | Users to fetch for completion (default `1000`) |
+| `jira-tempo-max-results` | Tempo worklogs to fetch (default `50`) |
+| `jira-detail-show-announcements` | Show `jira.el` tips in the detail view (default `t`) |
+| `jira-debug` | Log requests and responses to `*Messages*` |
+
+Statuses get a face based on their category (to do, in progress, done). To style a
+specific status:
+
+```elisp
+(defface my-jira-face-review
   '((t (:foreground "white" :background "orange" :weight bold)))
-  "Face for pull-request status."
-  :group 'jira)
-  (setq jira-status-faces '(("Pull-request" . jira-face-pr)))
-  ```
-- `jira-datetime-format`: Format string for displaying datetimes (default: `%c`)
-- `jira-jira-issues-sort-key`: Default tabulated-list sort key for jira-issues-mode. Set to nil to preserve order from JQL (default: ("Status" . nil)).
+  "Face for the In Review status.")
+(setq jira-status-faces '(("In Review" . my-jira-face-review)))
+```
+
+All the filter menu arguments can also be saved permanently with `C-x C-s`, see the
+[transient docs](https://magit.vc/manual/transient/Saving-Values.html).
+
+## FAQ
+
+- **The issues list is empty and says "Jira API request failed".**
+  Look in `*Messages*`. If it says "Unbounded JQL queries are not allowed here", Jira Cloud
+  is rejecting a search without any condition: keep at least one filter (for example a
+  project or "Just from myself") when listing.
+
+- **Authentication fails although my token is right.**
+  Check that the `auth-source` `machine` matches `jira-base-url` without `https://`, and
+  that `jira-username` and `jira-token` aren't set to something else. Set `jira-debug` to
+  `t` to see the requests in `*Messages*`.
+
+- **Does it work with my on-premise instance?**
+  I don't have access to one, so support relies on the official documentation and on
+  your issues and PRs. Set `jira-api-version` to `2` if your instance needs it.
+
+- **Does it work with Evil mode?**
+  Not currently, as I don't use it. PRs welcome! See
+  [#31](https://github.com/unmonoqueteclea/jira.el/issues/31).
+
+## Contributing
+
+Issues and pull requests are very welcome. See the [changelog](changelog.md) for what has
+changed in each version.
