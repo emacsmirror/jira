@@ -1,4 +1,11 @@
 # Changelog
+## 2.22.1 (2026-10-04)
+- Support `auth-source` backends that return the secret as a string (#87, fixes #74)
+- Don't turn hyphenated words into strikethrough text when saving comments and
+  descriptions (#88)
+- After adding a worklog, only open Tempo when a Tempo token is configured; otherwise
+  refresh the issues list (#89)
+
 ## 2.22.0 (2026-10-04)
 - Upload attachments with `A` in the detail view, delete them with `d`, and attach a region,
   buffer or Dired marked files from anywhere with `jira-attach-dwim` (#84)
