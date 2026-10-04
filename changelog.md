@@ -1,4 +1,9 @@
 # Changelog
+## 2.23.0 (2026-10-04)
+- In the detail view, `U` offers the field under the cursor as the default (#90, fixes #52)
+- `C-c C-k` cancels the comment and description editor without prompting (#91)
+- Fix section lookup in the detail view: `TAB` now folds the summary section (#92)
+
 ## 2.22.1 (2026-10-04)
 - Support `auth-source` backends that return the secret as a string (#87, fixes #74)
 - Don't turn hyphenated words into strikethrough text when saving comments and
